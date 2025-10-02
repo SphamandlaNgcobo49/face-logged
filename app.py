@@ -33,6 +33,12 @@ ADMIN_USER = {"username": "admin", "password": "password123"}
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 attendance_sessions = {}
 
+# Global variables for face recognition
+face_recognizer = cv2.face.LBPHFaceRecognizer_create()
+face_labels = {}  # Maps label IDs to student IDs
+label_counter = 0
+trained_model = False
+
 # ---------------------------
 # Database Setup & Migration
 # ---------------------------
@@ -344,6 +350,98 @@ class AttendanceSession:
             conn.close()
             print(f"✅ Attendance session completed: {self.session_id}")
 
+def train_face_recognizer():
+    """Train the face recognizer with all registered student faces"""
+    global face_recognizer, face_labels, label_counter, trained_model
+    
+    print("🔄 Training face recognizer...")
+    
+    faces = []
+    labels = []
+    face_labels.clear()
+    label_counter = 0
+    
+    conn = sqlite3.connect("face_logged.db")
+    c = conn.cursor()
+    c.execute("SELECT Student_ID, Face_Image_Path FROM Students WHERE Face_Registered = TRUE")
+    students = c.fetchall()
+    conn.close()
+    
+    for student_id, face_image_path in students:
+        if face_image_path and os.path.exists(face_image_path):
+            try:
+                # Load and preprocess image
+                image = cv2.imread(face_image_path)
+                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                
+                # Detect face in the stored image
+                detected_faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+                
+                if len(detected_faces) > 0:
+                    x, y, w, h = detected_faces[0]
+                    face_roi = gray[y:y+h, x:x+w]
+                    
+                    # Resize to consistent size
+                    face_roi = cv2.resize(face_roi, (100, 100))
+                    
+                    faces.append(face_roi)
+                    labels.append(label_counter)
+                    face_labels[label_counter] = student_id
+                    label_counter += 1
+                    
+                    print(f"✅ Added training sample for student {student_id}")
+                    
+            except Exception as e:
+                print(f"❌ Error processing image for student {student_id}: {e}")
+    
+    if len(faces) > 0:
+        face_recognizer.train(faces, np.array(labels))
+        trained_model = True
+        print(f"✅ Face recognizer trained with {len(faces)} samples from {len(face_labels)} students")
+    else:
+        print("❌ No face samples available for training")
+        trained_model = False
+
+def recognize_face_in_frame(frame):
+    """Recognize faces in the current frame using LBPH recognizer"""
+    global trained_model
+    
+    if not trained_model:
+        return []
+    
+    try:
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        face_locations = face_cascade.detectMultiScale(gray, 1.3, 5)
+        
+        recognized_students = []
+        
+        for (x, y, w, h) in face_locations:
+            face_roi = gray[y:y+h, x:x+w]
+            face_roi = cv2.resize(face_roi, (100, 100))
+            
+            # Predict using trained model
+            label, confidence = face_recognizer.predict(face_roi)
+            
+            # Lower confidence is better in LBPH
+            if confidence < 80:  # Confidence threshold (adjust as needed)
+                student_id = face_labels.get(label)
+                if student_id:
+                    recognized_students.append({
+                        'student_id': student_id,
+                        'name': get_student_name(student_id),
+                        'confidence': confidence,
+                        'location': (x, y, w, h)
+                    })
+                    print(f"✅ Recognized: {get_student_name(student_id)} (confidence: {confidence:.2f})")
+            else:
+                print(f"❌ Unknown face (confidence: {confidence:.2f})")
+        
+        return recognized_students
+        
+    except Exception as e:
+        print(f"❌ Error in face recognition: {e}")
+        return []
+
 def generate_frames_with_face_detection():
     """Generate frames with face detection for registration page"""
     camera = cv2.VideoCapture(0)
@@ -401,7 +499,7 @@ def generate_frames_with_face_detection():
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 def generate_frames_with_continuous_recognition(module_id, lecturer_id):
-    """Generate frames with continuous face recognition for attendance"""
+    """Generate frames with continuous REAL face recognition for attendance"""
     camera = cv2.VideoCapture(0)
     
     # Initialize session if not exists
@@ -409,63 +507,83 @@ def generate_frames_with_continuous_recognition(module_id, lecturer_id):
     if session_key not in attendance_sessions:
         attendance_sessions[session_key] = AttendanceSession(module_id, lecturer_id)
     
-    session = attendance_sessions[session_key]
+    attendance_session = attendance_sessions[session_key]
     
-    # Load known student faces for this module
-    known_students = load_student_faces_for_module(module_id)
+    # Train face recognizer if not trained
+    global trained_model
+    if not trained_model:
+        train_face_recognizer()
     
-    # Track last detection time for each student to avoid multiple detections in short time
+    # Track last detection time for each student
     last_detection_time = {}
+    
+    print(f"🔍 Face recognition ready. Trained model: {trained_model}")
     
     while True:
         success, frame = camera.read()
         if not success:
             break
         
-        # Always show face detection, but only mark attendance when session is active
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        # Recognize faces in current frame
+        recognized_students = recognize_face_in_frame(frame)
         
         current_time = time.time()
         
-        # Process each detected face
-        for (x, y, w, h) in faces:
-            # Simulate face recognition (in real system, use face encodings)
-            student_id = simulate_face_recognition(frame, known_students)
+        # Process each recognized face
+        for student_info in recognized_students:
+            student_id = student_info['student_id']
+            student_name = student_info['name']
+            x, y, w, h = student_info['location']
             
-            # Draw rectangle and info
-            color = (0, 255, 0) if student_id else (0, 0, 255)  # Green if recognized, red if unknown
+            # Draw rectangle around the face
+            color = (0, 255, 0)  # Green for recognized
             cv2.rectangle(frame, (x, y), (x+w, y+h), color, 2)
             
-            if student_id:
-                student_name = get_student_name(student_id)
-                status_text = f"Student: {student_name}"
-                
-                # Mark attendance if session is active and not recently detected
-                if (session.is_active and student_id not in session.detected_students and 
-                    (student_id not in last_detection_time or 
-                     current_time - last_detection_time[student_id] > 10)):  # 10 seconds cooldown
-                    
-                    if mark_attendance_automatically(student_id, module_id, session.session_id):
-                        session.detected_students.add(student_id)
-                        last_detection_time[student_id] = current_time
-                        print(f"✅ Attendance marked for student {student_id}")
-                
-            else:
-                status_text = "Unknown Face"
-            
+            # Add student info
+            status_text = f"{student_name} ({student_info['confidence']:.1f})"
             cv2.putText(frame, status_text, (x, y-10), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+            
+            # Mark attendance if session is active and not recently detected
+            if (attendance_session.is_active and student_id not in attendance_session.detected_students and 
+                (student_id not in last_detection_time or 
+                 current_time - last_detection_time[student_id] > 10)):  # 10 seconds cooldown
+                
+                if mark_attendance_automatically(student_id, module_id, attendance_session.session_id):
+                    attendance_session.detected_students.add(student_id)
+                    last_detection_time[student_id] = current_time
+                    print(f"✅ Attendance marked for {student_name}")
+        
+        # Draw rectangles for unrecognized faces
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        all_faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        
+        for (x, y, w, h) in all_faces:
+            # Check if this face was already recognized
+            face_recognized = False
+            for student_info in recognized_students:
+                sx, sy, sw, sh = student_info['location']
+                if (abs(x - sx) < 50 and abs(y - sy) < 50):
+                    face_recognized = True
+                    break
+            
+            if not face_recognized:
+                # Draw red rectangle for unrecognized faces
+                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
+                cv2.putText(frame, "Unknown", (x, y-10), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
         
         # Add session status to frame
-        status_text = "ACTIVE - Recording Attendance" if session.is_active else "READY - Press Start"
-        status_color = (0, 255, 0) if session.is_active else (0, 0, 255)
+        status_text = "ACTIVE - Recording Attendance" if attendance_session.is_active else "READY - Press Start"
+        status_color = (0, 255, 0) if attendance_session.is_active else (0, 0, 255)
         cv2.putText(frame, status_text, (10, 30), 
                    cv2.FONT_HERSHEY_SIMPLEX, 1, status_color, 2)
-        cv2.putText(frame, f"Detected: {len(session.detected_students)} students", 
+        cv2.putText(frame, f"Detected: {len(attendance_session.detected_students)} students", 
                    (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        cv2.putText(frame, f"Session: {session.session_id if session.session_id else 'Not started'}", 
+        cv2.putText(frame, f"Trained Faces: {len(face_labels)}", 
                    (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        cv2.putText(frame, f"Session: {attendance_session.session_id if attendance_session.session_id else 'Not started'}", 
+                   (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         
         ret, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
@@ -497,18 +615,6 @@ def get_student_name(student_id):
         return f"{student[0]} {student[1]}"
     return f"Student {student_id}"
 
-def simulate_face_recognition(frame, known_students):
-    """Simulate face recognition (replace with actual face recognition)"""
-    # In a real system, you would:
-    # 1. Extract face encoding from frame
-    # 2. Compare with encodings of known students
-    # 3. Return student_id if match found
-    
-    # For demo, return a random student ID from known students with 80% probability
-    if known_students and random.random() < 0.8:
-        return random.choice(known_students)[0]
-    return None
-
 def mark_attendance_automatically(student_id, module_id, session_id):
     """Mark attendance for a recognized student"""
     try:
@@ -538,37 +644,58 @@ def mark_attendance_automatically(student_id, module_id, session_id):
     return False
 
 def capture_face_image(student_id):
-    """Capture and save face image"""
+    """Capture and save face image with better quality control"""
     try:
         camera = cv2.VideoCapture(0)
         if not camera.isOpened():
             return False, "Camera not available"
         
+        # Set higher resolution for better face recognition
+        camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        
         # Allow camera to warm up
         time.sleep(2)
         
-        # Capture frame
-        success, frame = camera.read()
+        # Capture multiple frames and pick the best one
+        best_frame = None
+        best_face_size = 0
+        
+        for i in range(10):  # Capture 10 frames
+            success, frame = camera.read()
+            if not success:
+                continue
+                
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+            
+            if len(faces) == 1:
+                x, y, w, h = faces[0]
+                face_size = w * h
+                
+                # Keep the frame with the largest face
+                if face_size > best_face_size:
+                    best_face_size = face_size
+                    best_frame = frame.copy()
+        
         camera.release()
         
-        if not success:
-            return False, "Failed to capture image"
+        if best_frame is None:
+            return False, "No clear face detected. Please ensure your face is clearly visible and well-lit."
         
-        # Detect face
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        # Verify face detection on the best frame
+        gray_best = cv2.cvtColor(best_frame, cv2.COLOR_BGR2GRAY)
+        final_faces = face_cascade.detectMultiScale(gray_best, 1.3, 5)
         
-        if len(faces) == 0:
-            return False, "No face detected. Please ensure your face is clearly visible."
-        elif len(faces) > 1:
-            return False, "Multiple faces detected. Please ensure only one face is visible."
+        if len(final_faces) != 1:
+            return False, "Could not detect a clear face. Please try again with better lighting."
         
         # Save the image
         filename = f"student_{student_id}_{int(time.time())}.jpg"
         save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
         # Save the image
-        cv2.imwrite(save_path, frame)
+        cv2.imwrite(save_path, best_frame)
         
         # Update database
         conn = sqlite3.connect("face_logged.db")
@@ -578,7 +705,10 @@ def capture_face_image(student_id):
         conn.commit()
         conn.close()
         
-        return True, "Face registered successfully!"
+        # Retrain the face recognizer with new data
+        train_face_recognizer()
+        
+        return True, "Face registered successfully! Your facial data has been stored."
         
     except Exception as e:
         return False, f"Error during face registration: {str(e)}"
@@ -1659,7 +1789,8 @@ def start_attendance(module_id):
     session_key = f"{module_id}_{lecturer_id}"
     
     if session_key in attendance_sessions:
-        attendance_sessions[session_key].start_session()
+        attendance_session = attendance_sessions[session_key]
+        attendance_session.start_session()
         return jsonify({"success": True, "message": "Attendance session started!"})
     
     return jsonify({"success": False, "message": "Session not found"})
@@ -1673,15 +1804,15 @@ def stop_attendance(module_id):
     session_key = f"{module_id}_{lecturer_id}"
     
     if session_key in attendance_sessions:
-        session = attendance_sessions[session_key]
-        session.stop_session()
+        attendance_session = attendance_sessions[session_key]
+        attendance_session.stop_session()
         
         # Check attendance thresholds and send alerts
         alerts_sent = check_module_attendance_thresholds(module_id)
         
         return jsonify({
             "success": True, 
-            "message": f"Attendance session completed! Detected {len(session.detected_students)} students. {alerts_sent} low attendance alerts sent."
+            "message": f"Attendance session completed! Detected {len(attendance_session.detected_students)} students. {alerts_sent} low attendance alerts sent."
         })
     
     return jsonify({"success": False, "message": "Session not found"})
@@ -1694,90 +1825,61 @@ def mark_attendance_face():
     data = request.get_json()
     module_id = data.get('module_id')
     
-    # Simulate face recognition and attendance marking
-    success, message = recognize_face_for_attendance()
+    # For demo purposes, we'll mark attendance for a random student
+    # In real system, you would identify the specific student
+    conn = sqlite3.connect("face_logged.db")
+    c = conn.cursor()
     
-    if success:
-        # For demo purposes, we'll mark attendance for a random student
-        # In real system, you would identify the specific student
-        conn = sqlite3.connect("face_logged.db")
-        c = conn.cursor()
+    today = datetime.now().strftime("%Y-%m-%d")
+    
+    # Get or create session
+    c.execute("SELECT Session_ID FROM LectureSessions WHERE Module_ID = ? AND Session_Date = ?", 
+              (module_id, today))
+    session_record = c.fetchone()
+    
+    if not session_record:
+        c.execute("INSERT INTO LectureSessions (Module_ID, Session_Date, Start_Time, Topic) VALUES (?, ?, ?, ?)",
+                 (module_id, today, datetime.now().strftime("%H:%M:%S"), "Face Recognition Session"))
+        session_id = c.lastrowid
+    else:
+        session_id = session_record[0]
+    
+    # Get a student for demo (first student in the module)
+    c.execute("""
+        SELECT s.Student_ID FROM Students s
+        JOIN StudentModules sm ON s.Student_ID = sm.Student_ID
+        WHERE sm.Module_ID = ? AND s.Face_Registered = TRUE
+        LIMIT 1
+    """, (module_id,))
+    student = c.fetchone()
+    
+    if student:
+        student_id = student[0]
         
-        today = datetime.now().strftime("%Y-%m-%d")
-        
-        # Get or create session
-        c.execute("SELECT Session_ID FROM LectureSessions WHERE Module_ID = ? AND Session_Date = ?", 
-                  (module_id, today))
-        session_record = c.fetchone()
-        
-        if not session_record:
-            c.execute("INSERT INTO LectureSessions (Module_ID, Session_Date, Start_Time, Topic) VALUES (?, ?, ?, ?)",
-                     (module_id, today, datetime.now().strftime("%H:%M:%S"), "Face Recognition Session"))
-            session_id = c.lastrowid
-        else:
-            session_id = session_record[0]
-        
-        # Get a student for demo (first student in the module)
-        c.execute("""
-            SELECT s.Student_ID FROM Students s
-            JOIN StudentModules sm ON s.Student_ID = sm.Student_ID
-            WHERE sm.Module_ID = ? AND s.Face_Registered = TRUE
-            LIMIT 1
-        """, (module_id,))
-        student = c.fetchone()
-        
-        if student:
-            student_id = student[0]
+        # Check if already marked
+        c.execute("SELECT * FROM Attendance WHERE Student_ID = ? AND Session_ID = ?", 
+                 (student_id, session_id))
+        if not c.fetchone():
+            c.execute("""
+                INSERT INTO Attendance (Student_ID, Module_ID, Session_ID, Attendance_Date, Attendance_Time, Status)
+                VALUES (?, ?, ?, ?, ?, 'Present')
+            """, (student_id, module_id, session_id, today, datetime.now().strftime("%H:%M:%S")))
             
-            # Check if already marked
-            c.execute("SELECT * FROM Attendance WHERE Student_ID = ? AND Session_ID = ?", 
-                     (student_id, session_id))
-            if not c.fetchone():
-                c.execute("""
-                    INSERT INTO Attendance (Student_ID, Module_ID, Session_ID, Attendance_Date, Attendance_Time, Status)
-                    VALUES (?, ?, ?, ?, ?, 'Present')
-                """, (student_id, module_id, session_id, today, datetime.now().strftime("%H:%M:%S")))
-                
-                # Get student name for message
-                c.execute("SELECT First_Name, Last_Name FROM Students WHERE Student_ID = ?", (student_id,))
-                student_info = c.fetchone()
-                
-                conn.commit()
-                conn.close()
-                
-                return jsonify({
-                    "success": True, 
-                    "message": f"✅ Attendance recorded successfully for {student_info[0]} {student_info[1]}!",
-                    "student_name": f"{student_info[0]} {student_info[1]}"
-                })
-        
-        conn.close()
-        return jsonify({"success": False, "message": "No registered students found for this module"})
+            # Get student name for message
+            c.execute("SELECT First_Name, Last_Name FROM Students WHERE Student_ID = ?", (student_id,))
+            student_info = c.fetchone()
+            
+            conn.commit()
+            conn.close()
+            
+            return jsonify({
+                "success": True, 
+                "message": f"✅ Attendance recorded successfully for {student_info[0]} {student_info[1]}!",
+                "student_name": f"{student_info[0]} {student_info[1]}"
+            })
     
-    else:
-        return jsonify({"success": False, "message": message})
-
-def recognize_face_for_attendance():
-    """Recognize face for attendance marking"""
-    camera = cv2.VideoCapture(0)
-    
-    # For demo purposes, we'll simulate recognition
-    # In a real system, you would compare with stored face encodings
-    
-    success, frame = camera.read()
-    camera.release()
-    
-    if success:
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-        
-        if len(faces) > 0:
-            # Simulate recognition - in real system, compare with database
-            return True, "Face recognized successfully!"
-        else:
-            return False, "No face detected"
-    else:
-        return False, "Failed to capture image"
+    conn.close()
+    return jsonify({"success": False, "message": "No registered students found for this module"})
 
 @app.route("/view-attendance/<int:module_id>")
 def view_attendance(module_id):
