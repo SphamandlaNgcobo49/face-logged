@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<!-- Welcome Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+            <div class="card-body text-white p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="fw-bold mb-2">Welcome, {{ student[1] }} {{ student[2] }}!</h2>
+                        <p class="mb-0 opacity-90">
+                            <i class="fas fa-id-card me-2"></i>Student Number: {{ student[3] }}
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="feature-icon mx-auto" style="width: 80px; height: 80px;">
+                            <i class="fas fa-user-graduate fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Attendance Summary -->
+    <div class="col-lg-8 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0 text-white"><i class="fas fa-chart-line me-2"></i>Attendance Summary</h5>
+            </div>
+            <div class="card-body">
+                {% if module_attendance %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Module</th>
+                                <th>Code</th>
+                                <th>Attendance</th>
+                                <th>Threshold</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for module in module_attendance %}
+                            <tr>
+                                <td class="fw-semibold">{{ module.module_name }}</td>
+                                <td><span class="badge bg-light text-dark">{{ module.module_code }}</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-3" style="height: 8px;">
+                                            <div class="progress-bar {% if module.attendance >= module.threshold %}bg-success{% else %}bg-warning{% endif %}" 
+                                                 role="progressbar" style="width: {{ module.attendance }}%;">
+                                            </div>
+                                        </div>
+                                        <span class="fw-semibold">{{ module.attendance }}%</span>
+                                    </div>
+                                </td>
+                                <td>{{ module.threshold }}%</td>
+                                <td>
+                                    {% if module.attendance >= module.threshold %}
+                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Good</span>
+                                    {% else %}
+                                    <span class="badge bg-warning"><i class="fas fa-exclamation me-1"></i>Low</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-book fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Modules Enrolled</h5>
+                    <p class="text-muted">You are not enrolled in any modules yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Cards -->
+    <div class="col-lg-4 mb-4">
+        <!-- Face Registration Status -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0 text-white"><i class="fas fa-camera me-2"></i>Face Registration</h6>
+            </div>
+            <div class="card-body text-center py-4">
+                {% if face_registered %}
+                <div class="feature-icon mx-auto mb-3 bg-success">
+                    <i class="fas fa-check"></i>
+                </div>
+                <h6 class="text-success fw-semibold">Face Registered</h6>
+                <p class="text-muted small">Your face data is ready for attendance</p>
+                {% else %}
+                <div class="feature-icon mx-auto mb-3 bg-warning">
+                    <i class="fas fa-exclamation"></i>
+                </div>
+                <h6 class="text-warning fw-semibold">Face Not Registered</h6>
+                <p class="text-muted small mb-3">Register your face for automatic attendance</p>
+                <a href="{{ url_for('register_face') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-camera me-1"></i> Register Now
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Attendance -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h6 class="card-title mb-0 text-white"><i class="fas fa-history me-2"></i>Recent Attendance</h6>
+            </div>
+            <div class="card-body">
+                {% if recent_attendance %}
+                <div class="list-group list-group-flush">
+                    {% for record in recent_attendance %}
+                    <div class="list-group-item px-0 border-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1 fw-semibold">{{ record[1] }}</h6>
+                                <small class="text-muted">{{ record[2] }}</small>
+                            </div>
+                            <span class="badge {% if record[3] == 'Present' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ record[3] }}
+                            </span>
+                        </div>
+                        <small class="text-muted">{{ record[0] }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <i class="fas fa-calendar-times fa-2x text-muted mb-2"></i>
+                    <p class="text-muted small">No attendance records yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0 text-white"><i class="fas fa-rocket me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="{{ url_for('student_attendance') }}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="fas fa-calendar-check me-2"></i> View Attendance
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('register_face') }}" class="btn btn-outline-success w-100 py-3">
+                            <i class="fas fa-camera me-2"></i> Register Face
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('rate_lecture') }}" class="btn btn-outline-info w-100 py-3">
+                            <i class="fas fa-star me-2"></i> Rate Lectures
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary w-100 py-3">
+                            <i class="fas fa-sign-out-alt me-2"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

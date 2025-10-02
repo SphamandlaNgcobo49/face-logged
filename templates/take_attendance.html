@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Take Attendance{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h4 class="card-title mb-0 text-white">
+                    <i class="fas fa-camera me-2"></i>Facial Recognition Attendance - {{ module_code }}
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <!-- Instructions -->
+                <div class="alert alert-info border-0 mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-info-circle fa-2x text-info me-3"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1">Instructions for Attendance</h6>
+                            <p class="mb-0">Students should look at the camera to automatically record their attendance. 
+                            The system will recognize registered faces and mark attendance in real-time.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camera Feed -->
+                <div class="text-center mb-4">
+                    <div class="camera-container border rounded-3 p-4 bg-dark position-relative">
+                        <img id="cameraFeed" src="{{ url_for('video_feed') }}" 
+                             class="img-fluid rounded-2" style="max-height: 400px;">
+                        <div class="mt-3">
+                            <span id="faceStatus" class="badge bg-secondary fs-6 px-3 py-2">
+                                <i class="fas fa-circle me-2"></i>Camera Active - Looking for faces...
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recognition Results & Session Info -->
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0 text-white">
+                                    <i class="fas fa-users me-2"></i>Recently Recognized Students
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="recognitionResults">
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-user-clock fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">No students recognized yet.</p>
+                                        <small class="text-muted">Students will appear here as they are recognized</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0 text-white">
+                                    <i class="fas fa-info-circle me-2"></i>Attendance Session Info
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3">
+                                            <span class="fw-semibold">Module:</span>
+                                            <span class="badge bg-primary">{{ module_code }} - {{ module_name }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="p-3 bg-light rounded-3 text-center">
+                                            <small class="text-muted d-block">Date</small>
+                                            <span class="fw-bold text-dark" id="currentDate">{{ now.strftime('%Y-%m-%d') if now else '' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="p-3 bg-light rounded-3 text-center">
+                                            <small class="text-muted d-block">Time</small>
+                                            <span class="fw-bold text-dark" id="currentTime">{{ now.strftime('%H:%M:%S') if now else '' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="p-3 bg-success text-white rounded-3 text-center">
+                                            <small class="opacity-90 d-block">Status</small>
+                                            <span class="fw-bold">Session Active</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid gap-2 mt-4">
+                                    <button class="btn btn-primary btn-lg py-3 fw-semibold" onclick="markAttendance()">
+                                        <i class="fas fa-user-check me-2"></i> Mark Attendance via Face Recognition
+                                    </button>
+                                    <a href="{{ url_for('view_attendance', module_id=module_id) }}" class="btn btn-outline-primary py-3">
+                                        <i class="fas fa-list me-2"></i> View Attendance Records
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateTime() {
+    const now = new Date();
+    document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+}
+setInterval(updateTime, 1000);
+
+function markAttendance() {
+    const resultsDiv = document.getElementById('recognitionResults');
+    const faceStatus = document.getElementById('faceStatus');
+    
+    // Show processing
+    faceStatus.className = 'badge bg-warning fs-6 px-3 py-2';
+    faceStatus.innerHTML = '<i class="fas fa-sync-alt fa-spin me-2"></i>Processing face recognition...';
+    
+    fetch('/mark-attendance-face', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            module_id: {{ module_id }}
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            faceStatus.className = 'badge bg-success fs-6 px-3 py-2';
+            faceStatus.innerHTML = '<i class="fas fa-check-circle me-2"></i>Attendance marked successfully!';
+            
+            // Add to recognition results
+            const resultHtml = `
+                <div class="alert alert-success border-0 d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="fw-bold mb-1">${data.student_name}</h6>
+                        <small class="text-muted">Recognized via Face ID</small>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted d-block">${new Date().toLocaleTimeString()}</small>
+                        <span class="badge bg-success"><i class="fas fa-check me-1"></i>Present</span>
+                    </div>
+                </div>
+            `;
+            
+            if (resultsDiv.querySelector('.text-center')) {
+                resultsDiv.innerHTML = resultHtml;
+            } else {
+                resultsDiv.innerHTML = resultHtml + resultsDiv.innerHTML;
+            }
+            
+            // Show success message
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show mt-3 border-0';
+            alert.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-check-circle fa-2x text-success me-3"></i>
+                    <div>
+                        <h6 class="fw-bold mb-1">Success!</h6>
+                        <p class="mb-0">${data.message}</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.card-body').prepend(alert);
+            
+        } else {
+            faceStatus.className = 'badge bg-danger fs-6 px-3 py-2';
+            faceStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Recognition failed';
+            
+            // Show error message
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger alert-dismissible fade show mt-3 border-0';
+            alert.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger me-3"></i>
+                    <div>
+                        <h6 class="fw-bold mb-1">Recognition Failed</h6>
+                        <p class="mb-0">${data.message}</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.card-body').prepend(alert);
+        }
+    })
+    .catch(error => {
+        faceStatus.className = 'badge bg-danger fs-6 px-3 py-2';
+        faceStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Error occurred';
+        
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger alert-dismissible fade show mt-3 border-0';
+        alert.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle fa-2x text-danger me-3"></i>
+                <div>
+                    <h6 class="fw-bold mb-1">Connection Error</h6>
+                    <p class="mb-0">Please check your connection and try again.</p>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.querySelector('.card-body').prepend(alert);
+    });
+}
+</script>
+{% endblock %}

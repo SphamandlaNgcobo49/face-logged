@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Register Face{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h4 class="card-title mb-0 text-white"><i class="fas fa-camera me-2"></i>Face Registration</h4>
+            </div>
+            <div class="card-body p-4">
+                <!-- Student Information -->
+                <div class="alert alert-success border-0 mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="feature-icon me-3" style="width: 50px; height: 50px;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1 fw-bold">Student Information</h6>
+                            <p class="mb-0">
+                                <strong>Name:</strong> {{ student[0] }} {{ student[1] }}<br>
+                                <strong>Student Number:</strong> {{ student[2] }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="alert alert-warning border-0 mb-4">
+                    <div class="d-flex">
+                        <i class="fas fa-info-circle fa-2x text-warning me-3 mt-1"></i>
+                        <div>
+                            <h6 class="fw-bold mb-2">Important Instructions</h6>
+                            <ul class="mb-0 ps-3">
+                                <li>Ensure good lighting on your face</li>
+                                <li>Look directly at the camera</li>
+                                <li>Remove sunglasses, hats, or any face coverings</li>
+                                <li>Make sure only one face is visible in the camera</li>
+                                <li>You can only register your face once</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camera Feed -->
+                <div class="text-center mb-4">
+                    <div class="camera-container border rounded-3 p-4 bg-dark position-relative">
+                        <img id="cameraFeed" src="{{ url_for('video_feed') }}" 
+                             class="img-fluid rounded-2" style="max-height: 400px;">
+                        <div class="mt-3">
+                            <span id="faceStatus" class="badge bg-success fs-6 px-3 py-2">
+                                <i class="fas fa-circle me-2"></i>Camera Active
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Capture Button -->
+                <div class="text-center mb-4">
+                    <button id="captureBtn" class="btn btn-primary btn-lg px-5 py-3 fw-semibold">
+                        <i class="fas fa-camera me-2"></i> Capture & Register Face
+                    </button>
+                    <a href="{{ url_for('student_dashboard') }}" class="btn btn-outline-secondary btn-lg ms-3 px-5 py-3">
+                        <i class="fas fa-times me-2"></i> Cancel
+                    </a>
+                </div>
+
+                <!-- Progress -->
+                <div id="progressSection" class="mt-4 d-none">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <div class="progress mb-3" style="height: 12px;">
+                                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <div id="progressMessage" class="text-center fw-semibold"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips Card -->
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0 text-white"><i class="fas fa-lightbulb me-2"></i>Tips for Best Results</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle text-success me-3 fs-5"></i>
+                            <span>Use a clear, high-quality image</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle text-success me-3 fs-5"></i>
+                            <span>Face the camera directly</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle text-success me-3 fs-5"></i>
+                            <span>Ensure good, even lighting</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle text-success me-3 fs-5"></i>
+                            <span>Remove sunglasses or hats</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle text-success me-3 fs-5"></i>
+                            <span>No other people in the image</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle text-success me-3 fs-5"></i>
+                            <span>Maintain a neutral expression</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('captureBtn').addEventListener('click', function() {
+    const btn = this;
+    const progressSection = document.getElementById('progressSection');
+    const progressBar = document.getElementById('progressBar');
+    const progressMessage = document.getElementById('progressMessage');
+    const faceStatus = document.getElementById('faceStatus');
+
+    // Disable button and show progress
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+    progressSection.classList.remove('d-none');
+    
+    // Update status
+    faceStatus.className = 'badge bg-warning fs-6 px-3 py-2';
+    faceStatus.innerHTML = '<i class="fas fa-sync-alt fa-spin me-2"></i>Processing Face Detection';
+    
+    // Simulate progress
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += 10;
+        progressBar.style.width = progress + '%';
+        
+        if (progress <= 30) {
+            progressMessage.innerHTML = '<i class="fas fa-camera me-2"></i>Initializing camera...';
+        } else if (progress <= 60) {
+            progressMessage.innerHTML = '<i class="fas fa-search me-2"></i>Detecting face...';
+        } else if (progress <= 90) {
+            progressMessage.innerHTML = '<i class="fas fa-cog me-2"></i>Processing image...';
+        }
+        
+        if (progress >= 100) {
+            clearInterval(interval);
+            captureFace();
+        }
+    }, 200);
+});
+
+function captureFace() {
+    const progressMessage = document.getElementById('progressMessage');
+    const faceStatus = document.getElementById('faceStatus');
+    
+    progressMessage.innerHTML = '<i class="fas fa-save me-2"></i>Saving face data...';
+    faceStatus.className = 'badge bg-info fs-6 px-3 py-2';
+    faceStatus.innerHTML = '<i class="fas fa-database me-2"></i>Saving to Database';
+    
+    fetch('/capture-face', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            progressMessage.innerHTML = '<span class="text-success"><i class="fas fa-check-circle me-2"></i>' + data.message + '</span>';
+            faceStatus.className = 'badge bg-success fs-6 px-3 py-2';
+            faceStatus.innerHTML = '<i class="fas fa-check-circle me-2"></i>Registration Successful';
+            
+            setTimeout(() => {
+                window.location.href = '/face-registration-success';
+            }, 2000);
+        } else {
+            progressMessage.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>' + data.message + '</span>';
+            faceStatus.className = 'badge bg-danger fs-6 px-3 py-2';
+            faceStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Registration Failed';
+            
+            document.getElementById('captureBtn').disabled = false;
+            document.getElementById('captureBtn').innerHTML = '<i class="fas fa-camera me-2"></i> Try Again';
+        }
+    })
+    .catch(error => {
+        progressMessage.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error: ' + error + '</span>';
+        faceStatus.className = 'badge bg-danger fs-6 px-3 py-2';
+        faceStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Connection Error';
+        
+        document.getElementById('captureBtn').disabled = false;
+        document.getElementById('captureBtn').innerHTML = '<i class="fas fa-camera me-2"></i> Try Again';
+    });
+}
+</script>
+{% endblock %}

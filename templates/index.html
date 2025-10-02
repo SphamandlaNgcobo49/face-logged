@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - FaceLogged Smart Attendance System{% endblock %}
+
+{% block auth_content %}
+<div class="min-vh-100" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-lg-8 text-center text-white">
+                <div class="mb-5">
+                    <i class="fas fa-graduation-cap display-1 mb-4"></i>
+                    <h1 class="display-4 fw-bold mb-3">FaceLogged</h1>
+                    <p class="lead mb-4 opacity-90">
+                        Advanced Facial Recognition Attendance System for Modern Educational Institutions
+                    </p>
+                </div>
+
+                <div class="row g-4 mb-5">
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-lg">
+                            <div class="card-body text-center p-4">
+                                <div class="feature-icon mx-auto">
+                                    <i class="fas fa-user-graduate"></i>
+                                </div>
+                                <h5 class="fw-bold">Student Login</h5>
+                                <p class="text-muted">Access your attendance records and course materials with facial recognition</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-lg">
+                            <div class="card-body text-center p-4">
+                                <div class="feature-icon mx-auto">
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                </div>
+                                <h5 class="fw-bold">Lecturer Login</h5>
+                                <p class="text-muted">Manage classes, track attendance, and view student feedback</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-lg">
+                            <div class="card-body text-center p-4">
+                                <div class="feature-icon mx-auto">
+                                    <i class="fas fa-user-cog"></i>
+                                </div>
+                                <h5 class="fw-bold">Admin Login</h5>
+                                <p class="text-muted">System administration and comprehensive management tools</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <a href="{{ url_for('login') }}" class="btn btn-light btn-lg px-5 py-3 fw-bold">
+                        <i class="fas fa-sign-in-alt me-2"></i> Login to System
+                    </a>
+                </div>
+
+                <div class="row g-4 text-start">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-check-circle text-warning me-3 fs-5"></i>
+                            <span>Automated facial recognition attendance</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-check-circle text-warning me-3 fs-5"></i>
+                            <span>Real-time attendance tracking</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-check-circle text-warning me-3 fs-5"></i>
+                            <span>Comprehensive analytics and reporting</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-check-circle text-warning me-3 fs-5"></i>
+                            <span>Secure and reliable platform</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

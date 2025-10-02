@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FaceLogged - Smart Attendance System{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #10b981;
+            --dark-green: #059669;
+            --light-green: #34d399;
+            --lighter-green: #d1fae5;
+            --white: #ffffff;
+            --light-gray: #f8fafc;
+            --text-dark: #1f2937;
+        }
+        
+        body {
+            background-color: var(--light-gray);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-dark);
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--dark-green) 100%);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar .nav-link {
+            color: var(--white);
+            padding: 12px 20px;
+            margin: 4px 0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: rgba(255,255,255,0.15);
+            transform: translateX(5px);
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: rgba(255,255,255,0.2);
+            font-weight: 600;
+        }
+        
+        .main-content {
+            background-color: var(--light-gray);
+        }
+        
+        .navbar-custom {
+            background: var(--white);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-bottom: 3px solid var(--primary-green);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: var(--white);
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            color: var(--white);
+            border-radius: 12px 12px 0 0 !important;
+            border: none;
+            padding: 15px 20px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            border: none;
+            border-radius: 8px;
+        }
+        
+        .table {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .table thead {
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            color: var(--white);
+        }
+        
+        .badge-success {
+            background-color: var(--primary-green);
+        }
+        
+        .progress {
+            height: 8px;
+            border-radius: 10px;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary-green), var(--light-green));
+        }
+        
+        .alert-success {
+            background-color: var(--lighter-green);
+            border-color: var(--primary-green);
+            color: var(--dark-green);
+        }
+        
+        .stat-card {
+            border-left: 4px solid var(--primary-green);
+        }
+        
+        .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--white);
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    {% if session.logged_in %}
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+                <div class="position-sticky pt-3">
+                    <div class="text-center text-white mb-5 p-3">
+                        <div class="logo mb-2">
+                            <i class="fas fa-graduation-cap me-2"></i>
+                            FaceLogged
+                        </div>
+                        <small class="opacity-75">{{ session.role|title }} Portal</small>
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        {% if session.role == 'admin' %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'lecturers' %}active{% endif %}" href="{{ url_for('lecturers') }}">
+                                    <i class="fas fa-chalkboard-teacher me-2"></i> Lecturers
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'modules' %}active{% endif %}" href="{{ url_for('modules') }}">
+                                    <i class="fas fa-book me-2"></i> Modules
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'students' %}active{% endif %}" href="{{ url_for('students') }}">
+                                    <i class="fas fa-user-graduate me-2"></i> Students
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'admin_manage_faces' %}active{% endif %}" href="{{ url_for('admin_manage_faces') }}">
+                                    <i class="fas fa-camera me-2"></i> Face Management
+                                </a>
+                            </li>
+                        {% elif session.role == 'lecturer' %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'lecturer_dashboard' %}active{% endif %}" href="{{ url_for('lecturer_dashboard') }}">
+                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'lecture_ratings' %}active{% endif %}" href="{{ url_for('lecture_ratings') }}">
+                                    <i class="fas fa-star me-2"></i> Lecture Ratings
+                                </a>
+                            </li>
+                        {% elif session.role == 'student' %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'student_dashboard' %}active{% endif %}" href="{{ url_for('student_dashboard') }}">
+                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'student_attendance' %}active{% endif %}" href="{{ url_for('student_attendance') }}">
+                                    <i class="fas fa-calendar-check me-2"></i> My Attendance
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'register_face' %}active{% endif %}" href="{{ url_for('register_face') }}">
+                                    <i class="fas fa-camera me-2"></i> Register Face
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'rate_lecture' %}active{% endif %}" href="{{ url_for('rate_lecture') }}">
+                                    <i class="fas fa-star me-2"></i> Rate Lectures
+                                </a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item mt-4">
+                            <a class="nav-link text-warning" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <!-- Navigation Bar -->
+                <nav class="navbar navbar-custom navbar-expand-lg">
+                    <div class="container-fluid">
+                        <div class="navbar-nav ms-auto">
+                            <span class="navbar-text">
+                                <i class="fas fa-user-circle me-2"></i>
+                                Welcome, 
+                                {% if session.role == 'admin' %}
+                                    Administrator
+                                {% elif session.role == 'lecturer' %}
+                                    {{ session.get('lecturer_name', 'Lecturer') }}
+                                {% else %}
+                                    {{ session.get('student_name', 'Student') }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </nav>
+
+                <div class="container-fluid py-4">
+                    <!-- Flash messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+    {% else %}
+        {% block auth_content %}{% endblock %}
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

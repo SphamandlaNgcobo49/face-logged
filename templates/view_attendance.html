@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}View Attendance - {{ module_code }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="card-title mb-0 text-white">
+                    <i class="fas fa-list me-2"></i>Attendance Records - {{ module_code }}
+                </h4>
+                <div>
+                    <a href="{{ url_for('export_attendance', module_id=module_id) }}?format=pdf" class="btn btn-warning btn-sm">
+                        <i class="fas fa-file-pdf me-1"></i> Export PDF
+                    </a>
+                    <a href="{{ url_for('export_attendance', module_id=module_id) }}?format=excel" class="btn btn-success btn-sm">
+                        <i class="fas fa-file-excel me-1"></i> Export Excel
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Filters -->
+                <div class="row mb-4">
+                    <div class="col-lg-8">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <form method="GET" class="row g-3 align-items-end">
+                                    <div class="col-md-4">
+                                        <label for="date" class="form-label fw-semibold">Filter by Date</label>
+                                        <select class="form-select border-0 shadow-sm" id="date" name="date" onchange="this.form.submit()">
+                                            <option value="">All Dates</option>
+                                            {% for date in dates %}
+                                            <option value="{{ date[0] }}" {% if current_date == date[0] %}selected{% endif %}>
+                                                {{ date[0] }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="student" class="form-label fw-semibold">Filter by Student</label>
+                                        <input type="text" class="form-control border-0 shadow-sm" id="student" name="student" 
+                                               value="{{ current_student }}" placeholder="Name or Student Number">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="d-grid gap-2">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-filter me-2"></i> Apply Filters
+                                            </button>
+                                            <a href="{{ url_for('view_attendance', module_id=module_id) }}" class="btn btn-outline-secondary">
+                                                Clear Filters
+                                            </a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="card border-0 bg-primary text-white text-center">
+                                    <div class="card-body py-3">
+                                        <h6 class="mb-1">Module</h6>
+                                        <h5 class="mb-0 fw-bold">{{ module_code }}</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card border-0 bg-success text-white text-center">
+                                    <div class="card-body py-3">
+                                        <h6 class="mb-1">Records</h6>
+                                        <h5 class="mb-0 fw-bold">{{ attendance_records|length }}</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if attendance_records %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student Number</th>
+                                <th>Name</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Topic</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in attendance_records %}
+                            <tr>
+                                <td class="fw-semibold">{{ record[0] }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="feature-icon me-3" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-user-graduate"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-semibold">{{ record[1] }} {{ record[2] }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="fw-semibold">{{ record[3] }}</td>
+                                <td>{{ record[4] }}</td>
+                                <td>
+                                    {% if record[6] %}
+                                    <span class="text-muted">{{ record[6] }}</span>
+                                    {% else %}
+                                    <span class="text-muted fst-italic">General Lecture</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record[5] == 'Present' %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Present
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times me-1"></i>Absent
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="feature-icon mx-auto bg-light mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-search fa-2x text-muted"></i>
+                    </div>
+                    <h5 class="text-muted">No Attendance Records Found</h5>
+                    <p class="text-muted">No attendance records found for the selected filters.</p>
+                    <a href="{{ url_for('view_attendance', module_id=module_id) }}" class="btn btn-primary">
+                        <i class="fas fa-sync me-2"></i> Clear Filters
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

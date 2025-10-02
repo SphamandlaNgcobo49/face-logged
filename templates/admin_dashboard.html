@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+{% block header %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Statistics Cards -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-8">
+                        <div class="text-muted fw-semibold text-uppercase small">Total Students</div>
+                        <div class="h3 fw-bold text-dark mb-0">{{ student_count }}</div>
+                    </div>
+                    <div class="col-4 text-end">
+                        <div class="feature-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-8">
+                        <div class="text-muted fw-semibold text-uppercase small">Total Lecturers</div>
+                        <div class="h3 fw-bold text-dark mb-0">{{ lecturer_count }}</div>
+                    </div>
+                    <div class="col-4 text-end">
+                        <div class="feature-icon">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-8">
+                        <div class="text-muted fw-semibold text-uppercase small">Total Modules</div>
+                        <div class="h3 fw-bold text-dark mb-0">{{ module_count }}</div>
+                    </div>
+                    <div class="col-4 text-end">
+                        <div class="feature-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-8">
+                        <div class="text-muted fw-semibold text-uppercase small">System Status</div>
+                        <div class="h3 fw-bold text-success mb-0">Online</div>
+                    </div>
+                    <div class="col-4 text-end">
+                        <div class="feature-icon">
+                            <i class="fas fa-server"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0 text-white"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="{{ url_for('add_lecturer') }}" class="btn btn-primary w-100 py-3">
+                            <i class="fas fa-plus me-2"></i> Add Lecturer
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('add_student') }}" class="btn btn-success w-100 py-3">
+                            <i class="fas fa-plus me-2"></i> Add Student
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('add_module') }}" class="btn btn-info w-100 py-3">
+                            <i class="fas fa-plus me-2"></i> Add Module
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('students') }}" class="btn btn-warning w-100 py-3">
+                            <i class="fas fa-list me-2"></i> View All
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0 text-white"><i class="fas fa-users me-2"></i>Recent Students</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_students %}
+                <div class="list-group list-group-flush">
+                    {% for student in recent_students %}
+                    <div class="list-group-item px-0 border-0">
+                        <div class="d-flex align-items-center">
+                            <div class="feature-icon me-3" style="width: 45px; height: 45px;">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0 fw-semibold">{{ student[1] }} {{ student[2] }}</h6>
+                                <small class="text-muted">New {{ student[0] }}</small>
+                            </div>
+                            <small class="text-muted">{{ student[3][:10] }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No recent students</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0 text-white"><i class="fas fa-chalkboard-teacher me-2"></i>Recent Lecturers</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_lecturers %}
+                <div class="list-group list-group-flush">
+                    {% for lecturer in recent_lecturers %}
+                    <div class="list-group-item px-0 border-0">
+                        <div class="d-flex align-items-center">
+                            <div class="feature-icon me-3" style="width: 45px; height: 45px;">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0 fw-semibold">{{ lecturer[1] }} {{ lecturer[2] }}</h6>
+                                <small class="text-muted">New {{ lecturer[0] }}</small>
+                            </div>
+                            <small class="text-muted">{{ lecturer[3][:10] }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No recent lecturers</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

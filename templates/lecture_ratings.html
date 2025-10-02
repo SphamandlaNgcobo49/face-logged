@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Lecture Ratings{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Rating Summary -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h4 class="card-title mb-0 text-white">
+                    <i class="fas fa-chart-bar me-2"></i>Rating Summary by Session
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if rating_summary %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Module</th>
+                                <th>Date</th>
+                                <th>Topic</th>
+                                <th>Avg Rating</th>
+                                <th>Responses</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rating in rating_summary %}
+                            <tr>
+                                <td class="fw-semibold">{{ rating[0] }}</td>
+                                <td>{{ rating[2] }}</td>
+                                <td>
+                                    {% if rating[3] %}
+                                    <span class="text-muted">{{ rating[3] }}</span>
+                                    {% else %}
+                                    <span class="text-muted fst-italic">General Lecture</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="fw-bold me-2">{{ "%.1f"|format(rating[4] or 0) }}</span>
+                                        <div class="text-warning">
+                                            {% for i in range(5) %}
+                                                <i class="fas fa-star{% if i < (rating[4] or 0) %}{% if i < rating[4]|int %} text-warning{% else %}-half-alt text-warning{% endif %}{% else %} text-muted{% endif %}"></i>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge {% if rating[5] and rating[5] > 0 %}bg-primary{% else %}bg-secondary{% endif %}">
+                                        {{ rating[5] or 0 }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="feature-icon mx-auto bg-light mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-star fa-2x text-muted"></i>
+                    </div>
+                    <h5 class="text-muted">No Ratings Available</h5>
+                    <p class="text-muted">No lecture ratings available yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Feedback -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header">
+                <h4 class="card-title mb-0 text-white">
+                    <i class="fas fa-comments me-2"></i>Detailed Student Feedback
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if detailed_ratings %}
+                <div style="max-height: 600px; overflow-y: auto;">
+                    {% for rating in detailed_ratings %}
+                    <div class="card border-0 bg-light mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="fw-bold mb-0">{{ rating[4] }} {{ rating[5] }}</h6>
+                                    <small class="text-muted">{{ rating[0] }} - {{ rating[1] }}</small>
+                                </div>
+                                <div class="text-warning">
+                                    {% for i in range(5) %}
+                                        <i class="fas fa-star{% if i < rating[2] %} text-warning{% else %} text-muted{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% if rating[3] %}
+                            <p class="card-text mt-2 mb-0 p-3 bg-white rounded-2 border">{{ rating[3] }}</p>
+                            {% else %}
+                            <p class="card-text text-muted mt-2 mb-0 p-3 bg-white rounded-2 border fst-italic">No written feedback provided</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="feature-icon mx-auto bg-light mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-comments fa-2x text-muted"></i>
+                    </div>
+                    <h5 class="text-muted">No Feedback Available</h5>
+                    <p class="text-muted">No detailed feedback available yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h4 class="card-title mb-0 text-white">
+                    <i class="fas fa-chart-pie me-2"></i>Rating Statistics
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row g-4 text-center">
+                    <div class="col-md-3">
+                        <div class="card border-0 bg-primary text-white">
+                            <div class="card-body py-4">
+                                <div class="feature-icon mx-auto bg-white text-primary mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-calendar"></i>
+                                </div>
+                                <h3 class="fw-bold">{{ rating_summary|length }}</h3>
+                                <p class="mb-0">Sessions Rated</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 bg-success text-white">
+                            <div class="card-body py-4">
+                                <div class="feature-icon mx-auto bg-white text-success mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <h3 class="fw-bold">
+                                    {% if rating_summary %}
+                                        {{ "%.1f"|format(rating_summary|map(attribute=4)|select|list|sum / (rating_summary|map(attribute=4)|select|list|length or 1)) }}
+                                    {% else %}
+                                        0.0
+                                    {% endif %}
+                                </h3>
+                                <p class="mb-0">Average Rating</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 bg-info text-white">
+                            <div class="card-body py-4">
+                                <div class="feature-icon mx-auto bg-white text-info mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <h3 class="fw-bold">
+                                    {{ detailed_ratings|length if detailed_ratings else 0 }}
+                                </h3>
+                                <p class="mb-0">Total Responses</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 bg-warning text-white">
+                            <div class="card-body py-4">
+                                <div class="feature-icon mx-auto bg-white text-warning mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-comment"></i>
+                                </div>
+                                <h3 class="fw-bold">
+                                    {% if detailed_ratings %}
+                                        {{ (detailed_ratings|selectattr("3")|list|length / detailed_ratings|length * 100)|round|int }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </h3>
+                                <p class="mb-0">With Written Feedback</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

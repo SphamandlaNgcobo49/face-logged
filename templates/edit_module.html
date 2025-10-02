@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Module - Face Logged</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            background-color: #2E8B57;
+            color: white;
+            height: 100vh;
+            position: fixed;
+        }
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            display: block;
+            transition: background-color 0.3s;
+        }
+        .sidebar a:hover {
+            background-color: #3CB371;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: white;
+            border-bottom: 2px solid #2E8B57;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn-primary {
+            background-color: #2E8B57;
+            border-color: #2E8B57;
+        }
+        .btn-primary:hover {
+            background-color: #3CB371;
+            border-color: #3CB371;
+        }
+        .card {
+            border: 1px solid #2E8B57;
+            box-shadow: 0 2px 4px rgba(46, 139, 87, 0.1);
+        }
+        .card-header {
+            background-color: #2E8B57;
+            color: white;
+            border-bottom: 1px solid #2E8B57;
+        }
+        .form-label {
+            color: #2E8B57;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#" style="color: #2E8B57;">
+                <i class="fas fa-camera"></i> Face Logged - Admin
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('logout') }}" style="color: #2E8B57;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar">
+                <div class="p-3">
+                    <h5><i class="fas fa-user-shield"></i> Admin Panel</h5>
+                </div>
+                <ul class="nav flex-column">
+                    <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="{{ url_for('lecturers') }}"><i class="fas fa-chalkboard-teacher"></i> Lecturers</a></li>
+                    <li><a href="{{ url_for('students') }}"><i class="fas fa-user-graduate"></i> Students</a></li>
+                    <li><a href="{{ url_for('modules') }}"><i class="fas fa-book"></i> Modules</a></li>
+                    <li><a href="{{ url_for('admin_manage_faces') }}"><i class="fas fa-id-card"></i> Manage Faces</a></li>
+                </ul>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 main-content">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 style="color: #2E8B57;"><i class="fas fa-edit"></i> Edit Module</h2>
+                    <a href="{{ url_for('modules') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Modules
+                    </a>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="fas fa-info-circle"></i> Module Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('edit_module', module_id=module[0]) }}">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="module_code" class="form-label">Module Code *</label>
+                                    <input type="text" class="form-control" id="module_code" name="module_code" value="{{ module[1] }}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="module_name" class="form-label">Module Name *</label>
+                                    <input type="text" class="form-control" id="module_name" name="module_name" value="{{ module[2] }}" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="3">{{ module[3] or '' }}</textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="credits" class="form-label">Credits *</label>
+                                    <input type="number" class="form-control" id="credits" name="credits" value="{{ module[4] }}" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="semester" class="form-label">Semester *</label>
+                                    <select class="form-control" id="semester" name="semester" required>
+                                        <option value="1" {% if module[5] == '1' %}selected{% endif %}>Semester 1</option>
+                                        <option value="2" {% if module[5] == '2' %}selected{% endif %}>Semester 2</option>
+                                        <option value="3" {% if module[5] == '3' %}selected{% endif %}>Semester 3</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="department" class="form-label">Department *</label>
+                                    <input type="text" class="form-control" id="department" name="department" value="{{ module[6] }}" required>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="lecturer_id" class="form-label">Assigned Lecturer *</label>
+                                    <select class="form-control" id="lecturer_id" name="lecturer_id" required>
+                                        <option value="">Select Lecturer</option>
+                                        {% for lecturer in lecturers %}
+                                            <option value="{{ lecturer[0] }}" {% if lecturer[0] == module[7] %}selected{% endif %}>
+                                                {{ lecturer[1] }} {{ lecturer[2] }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="number_of_classes" class="form-label">Number of Classes *</label>
+                                    <input type="number" class="form-control" id="number_of_classes" name="number_of_classes" value="{{ module[9] }}" required>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="attendance_threshold" class="form-label">Attendance Threshold (%) *</label>
+                                    <input type="number" class="form-control" id="attendance_threshold" name="attendance_threshold" value="{{ module[10] }}" min="1" max="100" required>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Module
+                            </button>
+                            <a href="{{ url_for('modules') }}" class="btn btn-secondary">Cancel</a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
