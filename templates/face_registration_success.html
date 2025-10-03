@@ -1,94 +1,207 @@
 {% extends "base.html" %}
 
-{% block title %}Face Registration Successful{% endblock %}
+{% block title %}REGISTRATION SUCCESS - FaceLogged Cyber System{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center p-5">
-                <!-- Success Icon -->
-                <div class="mb-4">
-                    <div class="feature-icon mx-auto bg-success" style="width: 100px; height: 100px;">
-                        <i class="fas fa-check fa-3x"></i>
+<style>
+    .success-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .success-icon {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, var(--terminal-green), #00cc66);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        font-size: 3rem;
+        color: var(--dark-bg);
+        box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+        animation: pulseSuccess 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes pulseSuccess {
+        0% { transform: scale(1); box-shadow: 0 0 30px rgba(0, 255, 136, 0.4); }
+        100% { transform: scale(1.05); box-shadow: 0 0 50px rgba(0, 255, 136, 0.6); }
+    }
+    
+    .success-card {
+        background: rgba(17, 17, 34, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 255, 136, 0.3);
+        border-radius: 16px;
+        box-shadow: 0 8px 25px rgba(0, 255, 136, 0.2);
+    }
+    
+    .info-grid-success {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .info-item-success {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        background: rgba(0, 255, 136, 0.05);
+        border: 1px solid rgba(0, 255, 136, 0.2);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .info-item-success:hover {
+        background: rgba(0, 255, 136, 0.1);
+        border-color: var(--terminal-green);
+        transform: translateY(-2px);
+    }
+    
+    .info-icon-success {
+        width: 40px;
+        height: 40px;
+        background: rgba(0, 255, 136, 0.2);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--terminal-green);
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    
+    .info-content-success h6 {
+        font-family: 'Orbitron', monospace;
+        color: var(--terminal-green);
+        margin-bottom: 0.3rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.9rem;
+    }
+    
+    .info-content-success p {
+        font-family: 'Exo 2', sans-serif;
+        color: var(--text-light);
+        margin: 0;
+        font-size: 0.8rem;
+    }
+    
+    .btn-success-cyber {
+        background: linear-gradient(135deg, var(--terminal-green), #00cc66);
+        border: none;
+        border-radius: 8px;
+        padding: 1rem 2rem;
+        font-family: 'Orbitron', monospace;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--dark-bg);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-success-cyber:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
+        color: var(--dark-bg);
+    }
+    
+    .security-note {
+        background: rgba(0, 255, 136, 0.1);
+        border: 1px solid rgba(0, 255, 136, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 2rem;
+    }
+</style>
+
+<div class="success-container">
+    <div class="card success-card">
+        <div class="card-body p-5 text-center">
+            <!-- Success Icon -->
+            <div class="success-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            
+            <!-- Success Message -->
+            <h1 class="page-title text-terminal mb-3">FACE REGISTRATION SUCCESSFUL!</h1>
+            
+            <div class="alert alert-success border-0 mb-4">
+                <div class="d-flex align-items-center justify-content-center">
+                    <i class="fas fa-user-check fa-2x text-terminal me-3"></i>
+                    <div class="text-start">
+                        <h5 class="mb-1 cyber-text">IDENTITY VERIFIED, {{ student[0]|upper }}!</h5>
+                        <p class="mb-0 text-light">Your biometric data has been securely registered in our system.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Information Grid -->
+            <div class="info-grid-success">
+                <div class="info-item-success">
+                    <div class="info-icon-success">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <div class="info-content-success">
+                        <h6>AUTOMATIC ATTENDANCE</h6>
+                        <p>Face used for automatic attendance marking</p>
                     </div>
                 </div>
                 
-                <!-- Success Message -->
-                <h2 class="text-success fw-bold mb-3">Face Registration Successful!</h2>
+                <div class="info-item-success">
+                    <div class="info-icon-success">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="info-content-success">
+                        <h6>LOOK AT CAMERA</h6>
+                        <p>Simply look at camera during lectures</p>
+                    </div>
+                </div>
                 
-                <div class="alert alert-success border-0 mb-4">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-user-check fa-2x text-success me-3"></i>
-                        <div class="text-start">
-                            <h5 class="mb-1">Congratulations, {{ student[0] }}!</h5>
-                            <p class="mb-0">Your face has been successfully registered in our secure system.</p>
-                        </div>
+                <div class="info-item-success">
+                    <div class="info-icon-success">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div class="info-content-success">
+                        <h6>ONE-TIME SETUP</h6>
+                        <p>Cannot change face registration</p>
                     </div>
                 </div>
-
-                <!-- Information Card -->
-                <div class="card border-0 bg-light mb-4">
-                    <div class="card-body text-start">
-                        <h6 class="fw-bold mb-3"><i class="fas fa-info-circle me-2 text-primary"></i>What's Next?</h6>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-start">
-                                    <i class="fas fa-camera text-success me-3 mt-1"></i>
-                                    <div>
-                                        <small class="fw-semibold">Automatic Attendance</small>
-                                        <p class="text-muted small mb-0">Your face will be used for automatic attendance marking</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-start">
-                                    <i class="fas fa-eye text-success me-3 mt-1"></i>
-                                    <div>
-                                        <small class="fw-semibold">Look at Camera</small>
-                                        <p class="text-muted small mb-0">Simply look at the camera during lectures</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-start">
-                                    <i class="fas fa-lock text-success me-3 mt-1"></i>
-                                    <div>
-                                        <small class="fw-semibold">One-Time Setup</small>
-                                        <p class="text-muted small mb-0">You cannot change your face registration</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-start">
-                                    <i class="fas fa-user-cog text-success me-3 mt-1"></i>
-                                    <div>
-                                        <small class="fw-semibold">Admin Support</small>
-                                        <p class="text-muted small mb-0">Contact admin if you need to update</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                
+                <div class="info-item-success">
+                    <div class="info-icon-success">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <div class="info-content-success">
+                        <h6>ADMIN SUPPORT</h6>
+                        <p>Contact admin for updates</p>
                     </div>
                 </div>
+            </div>
 
-                <!-- Action Buttons -->
-                <div class="d-grid gap-3 d-md-flex justify-content-md-center">
-                    <a href="{{ url_for('student_dashboard') }}" class="btn btn-primary btn-lg px-5 py-3">
-                        <i class="fas fa-tachometer-alt me-2"></i> Go to Dashboard
-                    </a>
-                    <a href="{{ url_for('student_attendance') }}" class="btn btn-outline-primary btn-lg px-5 py-3">
-                        <i class="fas fa-calendar-check me-2"></i> View Attendance
-                    </a>
-                </div>
+            <!-- Action Buttons -->
+            <div class="d-flex gap-3 justify-content-center mt-4">
+                <a href="{{ url_for('student_dashboard') }}" class="btn btn-success-cyber">
+                    <i class="fas fa-tachometer-alt me-2"></i> DASHBOARD
+                </a>
+                <a href="{{ url_for('student_attendance') }}" class="btn btn-cancel">
+                    <i class="fas fa-calendar-check me-2"></i> ATTENDANCE
+                </a>
+            </div>
 
-                <!-- Security Note -->
-                <div class="mt-4 p-3 bg-light rounded-3">
-                    <small class="text-muted">
-                        <i class="fas fa-shield-alt me-2 text-success"></i>
-                        <strong>Security Note:</strong> Your facial data is encrypted and stored securely in compliance with privacy regulations.
-                    </small>
-                </div>
+            <!-- Security Note -->
+            <div class="security-note">
+                <small class="text-terminal">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    <strong>SECURITY PROTOCOL:</strong> Your facial data is encrypted and stored in compliance with privacy regulations.
+                </small>
             </div>
         </div>
     </div>

@@ -1,186 +1,150 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Module - Face Logged</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .sidebar {
-            background-color: #2E8B57; /* Sea Green */
-            color: white;
-            height: 100vh;
-            position: fixed;
-        }
-        .sidebar a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 15px;
-            display: block;
-            transition: background-color 0.3s;
-        }
-        .sidebar a:hover {
-            background-color: #3CB371; /* Medium Sea Green */
-        }
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            background-color: #f8f9fa;
-        }
-        .navbar {
-            background-color: white;
-            border-bottom: 2px solid #2E8B57;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .btn-primary {
-            background-color: #2E8B57;
-            border-color: #2E8B57;
-        }
-        .btn-primary:hover {
-            background-color: #3CB371;
-            border-color: #3CB371;
-        }
-        .card {
-            border: 1px solid #2E8B57;
-            box-shadow: 0 2px 4px rgba(46, 139, 87, 0.1);
-        }
-        .card-header {
-            background-color: #2E8B57;
-            color: white;
-            border-bottom: 1px solid #2E8B57;
-        }
-        .form-label {
-            color: #2E8B57;
-            font-weight: 500;
-        }
-    </style>
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#" style="color: #2E8B57;">
-                <i class="fas fa-camera"></i> Face Logged - Admin
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ url_for('logout') }}" style="color: #2E8B57;">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+{% extends "base.html" %}
+
+{% block title %}ADD MODULE - FaceLogged Cyber System{% endblock %}
+
+{% block content %}
+<style>
+    .form-card {
+        background: rgba(17, 17, 34, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 243, 255, 0.1);
+    }
+    
+    .select-cyber {
+        background: rgba(0, 243, 255, 0.05);
+        border: 1px solid rgba(0, 243, 255, 0.3);
+        color: var(--text-light);
+        padding: 0.75rem;
+        border-radius: 8px;
+        font-family: 'Exo 2', sans-serif;
+        transition: all 0.3s ease;
+    }
+    
+    .select-cyber:focus {
+        background: rgba(0, 243, 255, 0.1);
+        border-color: var(--cyber-blue);
+        box-shadow: 0 0 0 0.2rem rgba(0, 243, 255, 0.25);
+        color: var(--text-light);
+    }
+    
+    .textarea-cyber {
+        background: rgba(0, 243, 255, 0.05);
+        border: 1px solid rgba(0, 243, 255, 0.3);
+        color: var(--text-light);
+        padding: 0.75rem;
+        border-radius: 8px;
+        font-family: 'Exo 2', sans-serif;
+        transition: all 0.3s ease;
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    .textarea-cyber:focus {
+        background: rgba(0, 243, 255, 0.1);
+        border-color: var(--cyber-blue);
+        box-shadow: 0 0 0 0.2rem rgba(0, 243, 255, 0.25);
+        color: var(--text-light);
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">ADD MODULE</h1>
+    <div class="page-subtitle">CREATE NEW COURSE MODULE</div>
+</div>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mb-4" role="alert">
+                <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'warning' %}exclamation-triangle{% elif category == 'danger' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" style="filter: invert(1);"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="card form-card">
+    <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('add_module') }}">
+            <div class="form-section">
+                <h4 class="form-section-title">
+                    <i class="fas fa-info-circle me-2"></i>MODULE INFORMATION
+                </h4>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="module_code" class="form-label-cyber">MODULE CODE</label>
+                        <input type="text" class="form-control form-control-cyber" id="module_code" name="module_code" required placeholder="ENTER MODULE CODE">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="module_name" class="form-label-cyber">MODULE NAME</label>
+                        <input type="text" class="form-control form-control-cyber" id="module_name" name="module_name" required placeholder="ENTER MODULE NAME">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label-cyber">DESCRIPTION</label>
+                    <textarea class="form-control textarea-cyber" id="description" name="description" rows="3" placeholder="ENTER MODULE DESCRIPTION"></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="credits" class="form-label-cyber">CREDITS</label>
+                        <input type="number" class="form-control form-control-cyber" id="credits" name="credits" required placeholder="ENTER CREDITS">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="semester" class="form-label-cyber">SEMESTER</label>
+                        <select class="form-control select-cyber" id="semester" name="semester" required>
+                            <option value="">SELECT SEMESTER</option>
+                            <option value="1">SEMESTER 1</option>
+                            <option value="2">SEMESTER 2</option>
+                            <option value="3">SEMESTER 3</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="department" class="form-label-cyber">DEPARTMENT</label>
+                        <input type="text" class="form-control form-control-cyber" id="department" name="department" required placeholder="ENTER DEPARTMENT">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h4 class="form-section-title">
+                    <i class="fas fa-cog me-2"></i>MODULE CONFIGURATION
+                </h4>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="lecturer_id" class="form-label-cyber">ASSIGNED LECTURER</label>
+                        <select class="form-control select-cyber" id="lecturer_id" name="lecturer_id" required>
+                            <option value="">SELECT LECTURER</option>
+                            {% for lecturer in lecturers %}
+                                <option value="{{ lecturer[0] }}">{{ lecturer[1] }} {{ lecturer[2] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="number_of_classes" class="form-label-cyber">NUMBER OF CLASSES</label>
+                        <input type="number" class="form-control form-control-cyber" id="number_of_classes" name="number_of_classes" required placeholder="ENTER NUMBER">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="attendance_threshold" class="form-label-cyber">ATTENDANCE THRESHOLD (%)</label>
+                        <input type="number" class="form-control form-control-cyber" id="attendance_threshold" name="attendance_threshold" value="75" min="1" max="100" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-3 mt-4">
+                <button type="submit" class="btn btn-submit">
+                    <i class="fas fa-save me-2"></i> CREATE MODULE
+                </button>
+                <a href="{{ url_for('modules') }}" class="btn btn-cancel">
+                    <i class="fas fa-times me-2"></i> CANCEL
                 </a>
             </div>
-        </div>
-    </nav>
-
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-2 sidebar">
-                <div class="p-3">
-                    <h5><i class="fas fa-user-shield"></i> Admin Panel</h5>
-                </div>
-                <ul class="nav flex-column">
-                    <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                    <li><a href="{{ url_for('lecturers') }}"><i class="fas fa-chalkboard-teacher"></i> Lecturers</a></li>
-                    <li><a href="{{ url_for('students') }}"><i class="fas fa-user-graduate"></i> Students</a></li>
-                    <li><a href="{{ url_for('modules') }}"><i class="fas fa-book"></i> Modules</a></li>
-                    <li><a href="{{ url_for('admin_manage_faces') }}"><i class="fas fa-id-card"></i> Manage Faces</a></li>
-                </ul>
-            </div>
-
-            <!-- Main Content -->
-            <div class="col-md-10 main-content">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 style="color: #2E8B57;"><i class="fas fa-book-medical"></i> Add New Module</h2>
-                    <a href="{{ url_for('modules') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left"></i> Back to Modules
-                    </a>
-                </div>
-
-                <!-- Flash Messages -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0"><i class="fas fa-info-circle"></i> Module Information</h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="POST" action="{{ url_for('add_module') }}">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="module_code" class="form-label">Module Code *</label>
-                                    <input type="text" class="form-control" id="module_code" name="module_code" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="module_name" class="form-label">Module Name *</label>
-                                    <input type="text" class="form-control" id="module_name" name="module_name" required>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="description" class="form-label">Description</label>
-                                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label for="credits" class="form-label">Credits *</label>
-                                    <input type="number" class="form-control" id="credits" name="credits" required>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="semester" class="form-label">Semester *</label>
-                                    <select class="form-control" id="semester" name="semester" required>
-                                        <option value="">Select Semester</option>
-                                        <option value="1">Semester 1</option>
-                                        <option value="2">Semester 2</option>
-                                        <option value="3">Semester 3</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="department" class="form-label">Department *</label>
-                                    <input type="text" class="form-control" id="department" name="department" required>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="lecturer_id" class="form-label">Assigned Lecturer *</label>
-                                    <select class="form-control" id="lecturer_id" name="lecturer_id" required>
-                                        <option value="">Select Lecturer</option>
-                                        {% for lecturer in lecturers %}
-                                            <option value="{{ lecturer[0] }}">{{ lecturer[1] }} {{ lecturer[2] }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="number_of_classes" class="form-label">Number of Classes *</label>
-                                    <input type="number" class="form-control" id="number_of_classes" name="number_of_classes" required>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="attendance_threshold" class="form-label">Attendance Threshold (%) *</label>
-                                    <input type="number" class="form-control" id="attendance_threshold" name="attendance_threshold" value="75" min="1" max="100" required>
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Add Module
-                            </button>
-                            <a href="{{ url_for('modules') }}" class="btn btn-secondary">Cancel</a>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </form>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}

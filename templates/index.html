@@ -1,81 +1,243 @@
 {% extends "base.html" %}
 
-{% block title %}Welcome - FaceLogged Smart Attendance System{% endblock %}
+{% block title %}Welcome - FaceLogged Cyber Attendance System{% endblock %}
 
 {% block auth_content %}
-<div class="min-vh-100" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-    <div class="container">
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap');
+    
+    .cyber-gradient {
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
+    }
+    
+    .cyber-glow {
+        box-shadow: 
+            0 0 20px rgba(0, 255, 255, 0.3),
+            0 0 40px rgba(0, 255, 255, 0.2),
+            inset 0 0 20px rgba(0, 255, 255, 0.1);
+    }
+    
+    .cyber-border {
+        border: 1px solid #00ffff;
+        position: relative;
+    }
+    
+    .cyber-border::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, #00ffff, #ff00ff, #00ffff);
+        z-index: -1;
+        border-radius: inherit;
+        animation: borderGlow 3s linear infinite;
+    }
+    
+    @keyframes borderGlow {
+        0%, 100% { opacity: 0.7; }
+        50% { opacity: 1; }
+    }
+    
+    .cyber-text {
+        font-family: 'Orbitron', monospace;
+        text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+    }
+    
+    .feature-card {
+        background: rgba(16, 16, 32, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 
+            0 10px 30px rgba(0, 255, 255, 0.3),
+            0 0 50px rgba(0, 255, 255, 0.1);
+    }
+    
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #00ffff, #ff00ff);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 2rem;
+        color: #0f0f23;
+    }
+    
+    .scan-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #00ffff, transparent);
+        animation: scan 3s linear infinite;
+    }
+    
+    @keyframes scan {
+        0% { top: 0; }
+        100% { top: 100%; }
+    }
+    
+    .pulse-glow {
+        animation: pulseGlow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes pulseGlow {
+        from { box-shadow: 0 0 20px rgba(0, 255, 255, 0.5); }
+        to { box-shadow: 0 0 40px rgba(0, 255, 255, 0.8); }
+    }
+    
+    .matrix-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 0, 255, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: -1;
+    }
+</style>
+
+<div class="matrix-bg"></div>
+<div class="min-vh-100 cyber-gradient position-relative overflow-hidden">
+    <!-- Animated scan lines -->
+    <div class="scan-line"></div>
+    
+    <div class="container position-relative">
         <div class="row justify-content-center align-items-center min-vh-100">
-            <div class="col-lg-8 text-center text-white">
-                <div class="mb-5">
-                    <i class="fas fa-graduation-cap display-1 mb-4"></i>
-                    <h1 class="display-4 fw-bold mb-3">FaceLogged</h1>
-                    <p class="lead mb-4 opacity-90">
-                        Advanced Facial Recognition Attendance System for Modern Educational Institutions
+            <div class="col-lg-10 text-center text-white">
+                <!-- Header Section -->
+                <div class="mb-5 position-relative">
+                    <div class="cyber-glow rounded-circle d-inline-flex p-3 mb-4">
+                        <i class="fas fa-robot display-1 text-cyan"></i>
+                    </div>
+                    <h1 class="display-3 fw-bold cyber-text text-cyan mb-3">
+                        FACE<span class="text-magenta">LOGGED</span>
+                    </h1>
+                    <p class="lead mb-4 fs-4" style="font-family: 'Exo 2', sans-serif;">
+                        <span class="cyber-text">CYBER-SECURE FACIAL RECOGNITION ATTENDANCE SYSTEM</span>
                     </p>
+                    <div class="cyber-border rounded-pill px-4 py-2 d-inline-block">
+                        <span class="cyber-text">AI-POWERED • REAL-TIME • SECURE</span>
+                    </div>
                 </div>
 
+                <!-- Feature Cards -->
                 <div class="row g-4 mb-5">
                     <div class="col-md-4">
-                        <div class="card h-100 border-0 shadow-lg">
-                            <div class="card-body text-center p-4">
-                                <div class="feature-icon mx-auto">
-                                    <i class="fas fa-user-graduate"></i>
+                        <div class="card h-100 feature-card cyber-border">
+                            <div class="card-body text-center p-4 position-relative">
+                                <div class="scan-line"></div>
+                                <div class="feature-icon">
+                                    <i class="fas fa-face-recognition"></i>
                                 </div>
-                                <h5 class="fw-bold">Student Login</h5>
-                                <p class="text-muted">Access your attendance records and course materials with facial recognition</p>
+                                <h5 class="fw-bold cyber-text text-cyan mb-3">AI Face Detection</h5>
+                                <p class="text-light" style="font-family: 'Exo 2', sans-serif;">
+                                    Advanced neural networks for precise facial recognition and verification
+                                </p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card h-100 border-0 shadow-lg">
-                            <div class="card-body text-center p-4">
-                                <div class="feature-icon mx-auto">
-                                    <i class="fas fa-chalkboard-teacher"></i>
+                        <div class="card h-100 feature-card cyber-border">
+                            <div class="card-body text-center p-4 position-relative">
+                                <div class="scan-line"></div>
+                                <div class="feature-icon">
+                                    <i class="fas fa-database"></i>
                                 </div>
-                                <h5 class="fw-bold">Lecturer Login</h5>
-                                <p class="text-muted">Manage classes, track attendance, and view student feedback</p>
+                                <h5 class="fw-bold cyber-text text-cyan mb-3">Live Analytics</h5>
+                                <p class="text-light" style="font-family: 'Exo 2', sans-serif;">
+                                    Real-time attendance tracking with comprehensive data visualization
+                                </p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card h-100 border-0 shadow-lg">
-                            <div class="card-body text-center p-4">
-                                <div class="feature-icon mx-auto">
-                                    <i class="fas fa-user-cog"></i>
+                        <div class="card h-100 feature-card cyber-border">
+                            <div class="card-body text-center p-4 position-relative">
+                                <div class="scan-line"></div>
+                                <div class="feature-icon">
+                                    <i class="fas fa-shield-alt"></i>
                                 </div>
-                                <h5 class="fw-bold">Admin Login</h5>
-                                <p class="text-muted">System administration and comprehensive management tools</p>
+                                <h5 class="fw-bold cyber-text text-cyan mb-3">Cyber Security</h5>
+                                <p class="text-light" style="font-family: 'Exo 2', sans-serif;">
+                                    Military-grade encryption and secure biometric data protection
+                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="mb-4">
-                    <a href="{{ url_for('login') }}" class="btn btn-light btn-lg px-5 py-3 fw-bold">
-                        <i class="fas fa-sign-in-alt me-2"></i> Login to System
+                <!-- Login Section -->
+                <div class="mb-5">
+                    <a href="{{ url_for('login') }}" class="btn cyber-border cyber-glow pulse-glow px-5 py-3 fw-bold text-white">
+                        <i class="fas fa-terminal me-2"></i> 
+                        <span class="cyber-text">ACCESS SYSTEM TERMINAL</span>
                     </a>
                 </div>
 
-                <div class="row g-4 text-start">
+                <!-- Core Features Grid -->
+                <div class="row g-4 text-start mb-5">
                     <div class="col-md-6">
                         <div class="d-flex align-items-center mb-3">
-                            <i class="fas fa-check-circle text-warning me-3 fs-5"></i>
-                            <span>Automated facial recognition attendance</span>
+                            <i class="fas fa-microchip text-cyan me-3 fs-5 cyber-glow p-2 rounded"></i>
+                            <span class="cyber-text">Neural Network Face Matching</span>
                         </div>
                         <div class="d-flex align-items-center mb-3">
-                            <i class="fas fa-check-circle text-warning me-3 fs-5"></i>
-                            <span>Real-time attendance tracking</span>
+                            <i class="fas fa-bolt text-magenta me-3 fs-5 cyber-glow p-2 rounded"></i>
+                            <span class="cyber-text">Real-time Processing Engine</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-chart-network text-cyan me-3 fs-5 cyber-glow p-2 rounded"></i>
+                            <span class="cyber-text">Advanced Pattern Recognition</span>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="d-flex align-items-center mb-3">
-                            <i class="fas fa-check-circle text-warning me-3 fs-5"></i>
-                            <span>Comprehensive analytics and reporting</span>
+                            <i class="fas fa-user-shield text-magenta me-3 fs-5 cyber-glow p-2 rounded"></i>
+                            <span class="cyber-text">Biometric Data Encryption</span>
                         </div>
                         <div class="d-flex align-items-center mb-3">
-                            <i class="fas fa-check-circle text-warning me-3 fs-5"></i>
-                            <span>Secure and reliable platform</span>
+                            <i class="fas fa-cloud-upload-alt text-cyan me-3 fs-5 cyber-glow p-2 rounded"></i>
+                            <span class="cyber-text">Cloud Sync & Backup</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-video text-magenta me-3 fs-5 cyber-glow p-2 rounded"></i>
+                            <span class="cyber-text">Live Camera Integration</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Roles -->
+                <div class="row g-3 text-center">
+                    <div class="col-md-4">
+                        <div class="cyber-border rounded p-3">
+                            <i class="fas fa-user-graduate text-cyan me-2"></i>
+                            <span class="cyber-text">STUDENT ACCESS</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="cyber-border rounded p-3">
+                            <i class="fas fa-chalkboard-teacher text-magenta me-2"></i>
+                            <span class="cyber-text">LECTURER TERMINAL</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="cyber-border rounded p-3">
+                            <i class="fas fa-user-cog text-cyan me-2"></i>
+                            <span class="cyber-text">ADMIN CONTROL</span>
                         </div>
                     </div>
                 </div>
@@ -83,4 +245,12 @@
         </div>
     </div>
 </div>
+
+<!-- Add custom colors -->
+<style>
+    .text-cyan { color: #00ffff !important; }
+    .text-magenta { color: #ff00ff !important; }
+    .bg-cyan { background-color: #00ffff !important; }
+    .bg-magenta { background-color: #ff00ff !important; }
+</style>
 {% endblock %}

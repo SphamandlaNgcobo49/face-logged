@@ -1,62 +1,354 @@
 {% extends "base.html" %}
 
-{% block title %}Login - FaceLogged System{% endblock %}
+{% block title %}SYSTEM ACCESS - FaceLogged Cyber Terminal{% endblock %}
 
 {% block auth_content %}
-<div class="min-vh-100 d-flex align-items-center" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+<style>
+    .login-container {
+        min-height: 100vh;
+        background: var(--dark-bg);
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cyber-grid-login {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(180deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    .login-scan-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--cyber-blue), var(--cyber-pink), var(--cyber-blue), transparent);
+        animation: scan 3s linear infinite;
+        z-index: 1;
+    }
+    
+    .login-card {
+        background: rgba(17, 17, 34, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 243, 255, 0.3);
+        border-radius: 16px;
+        box-shadow: 
+            0 0 50px rgba(0, 243, 255, 0.1),
+            0 0 100px rgba(138, 43, 226, 0.05),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+        z-index: 10;
+    }
+    
+    .login-card::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, var(--cyber-blue), var(--cyber-pink), var(--cyber-purple), var(--cyber-blue));
+        border-radius: 18px;
+        z-index: -1;
+        animation: borderGlow 4s linear infinite;
+        opacity: 0.7;
+    }
+    
+    @keyframes borderGlow {
+        0% { filter: hue-rotate(0deg); }
+        100% { filter: hue-rotate(360deg); }
+    }
+    
+    .login-header {
+        text-align: center;
+        padding: 2rem 0 1rem;
+        position: relative;
+    }
+    
+    .login-icon {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, var(--cyber-blue), var(--cyber-purple));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2.5rem;
+        color: var(--dark-bg);
+        box-shadow: 0 0 30px rgba(0, 243, 255, 0.4);
+        animation: pulseIcon 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes pulseIcon {
+        0% { transform: scale(1); box-shadow: 0 0 30px rgba(0, 243, 255, 0.4); }
+        100% { transform: scale(1.05); box-shadow: 0 0 50px rgba(0, 243, 255, 0.6); }
+    }
+    
+    .login-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 2.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--cyber-blue), var(--cyber-pink));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: 3px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .login-subtitle {
+        font-family: 'Exo 2', sans-serif;
+        color: var(--cyber-blue);
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    .form-group-cyber {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label-cyber {
+        font-family: 'Orbitron', monospace;
+        color: var(--cyber-blue);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .input-group-cyber {
+        position: relative;
+    }
+    
+    .input-icon {
+        background: rgba(0, 243, 255, 0.1);
+        border: 1px solid rgba(0, 243, 255, 0.3);
+        border-right: none;
+        color: var(--cyber-blue);
+        padding: 0.75rem 1rem;
+        border-radius: 8px 0 0 8px;
+    }
+    
+    .form-control-cyber {
+        background: rgba(0, 243, 255, 0.05);
+        border: 1px solid rgba(0, 243, 255, 0.3);
+        border-left: none;
+        color: var(--text-light);
+        padding: 0.75rem;
+        border-radius: 0 8px 8px 0;
+        font-family: 'Exo 2', sans-serif;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control-cyber:focus {
+        background: rgba(0, 243, 255, 0.1);
+        border-color: var(--cyber-blue);
+        box-shadow: 0 0 0 0.2rem rgba(0, 243, 255, 0.25);
+        color: var(--text-light);
+    }
+    
+    .form-control-cyber::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+    }
+    
+    .btn-login {
+        background: linear-gradient(135deg, var(--cyber-blue), var(--cyber-purple));
+        border: none;
+        border-radius: 8px;
+        padding: 1rem 2rem;
+        font-family: 'Orbitron', monospace;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--dark-bg);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        margin-top: 1rem;
+    }
+    
+    .btn-login::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .btn-login:hover::before {
+        left: 100%;
+    }
+    
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0, 243, 255, 0.4);
+        color: var(--dark-bg);
+    }
+    
+    .demo-credentials {
+        background: rgba(0, 243, 255, 0.1);
+        border: 1px solid rgba(0, 243, 255, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 2rem;
+        font-family: 'Exo 2', sans-serif;
+    }
+    
+    .demo-title {
+        color: var(--cyber-blue);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .demo-code {
+        background: rgba(0, 0, 0, 0.3);
+        color: var(--terminal-green);
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        margin: 0 0.2rem;
+    }
+    
+    .cyber-particles-login {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+    }
+    
+    .particle-login {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: var(--cyber-blue);
+        border-radius: 50%;
+        animation: floatLogin 8s infinite linear;
+    }
+    
+    @keyframes floatLogin {
+        0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { transform: translateY(-100px) translateX(20px); opacity: 0; }
+    }
+    
+    .access-indicator {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: 'Orbitron', monospace;
+        font-size: 0.8rem;
+        color: var(--terminal-green);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .status-dot-login {
+        width: 8px;
+        height: 8px;
+        background: var(--terminal-green);
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+</style>
+
+<div class="login-container">
+    <div class="cyber-grid-login"></div>
+    <div class="login-scan-line"></div>
+    <div class="cyber-particles-login" id="loginParticles"></div>
+    
+    <div class="access-indicator">
+        <div class="status-dot-login"></div>
+        SYSTEM ONLINE
+    </div>
+    
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-6 col-lg-5">
-                <div class="card border-0 shadow-lg">
-                    <div class="card-body p-5">
-                        <div class="text-center mb-4">
-                            <div class="feature-icon mx-auto mb-3">
-                                <i class="fas fa-graduation-cap"></i>
+                <div class="login-card">
+                    <div class="card-body p-4 p-md-5">
+                        <!-- Header -->
+                        <div class="login-header">
+                            <div class="login-icon">
+                                <i class="fas fa-robot"></i>
                             </div>
-                            <h2 class="fw-bold text-dark">FaceLogged</h2>
-                            <p class="text-muted">Sign in to your account</p>
+                            <h1 class="login-title">FACELOGGED</h1>
+                            <div class="login-subtitle">TERMINAL ACCESS</div>
                         </div>
 
+                        <!-- Error Message -->
                         {% if error %}
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             <i class="fas fa-exclamation-triangle me-2"></i>
-                            {{ error }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            <span class="cyber-text">{{ error }}</span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" style="filter: invert(1);"></button>
                         </div>
                         {% endif %}
 
+                        <!-- Login Form -->
                         <form method="POST" action="{{ url_for('login') }}">
-                            <div class="mb-3">
-                                <label for="username" class="form-label fw-semibold">Username / Student Number</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0">
-                                        <i class="fas fa-user text-muted"></i>
+                            <div class="form-group-cyber">
+                                <label for="username" class="form-label-cyber">USER IDENTIFICATION</label>
+                                <div class="input-group input-group-cyber">
+                                    <span class="input-icon">
+                                        <i class="fas fa-user"></i>
                                     </span>
-                                    <input type="text" class="form-control border-start-0" id="username" name="username" required placeholder="Enter your username">
+                                    <input type="text" class="form-control form-control-cyber" id="username" name="username" required placeholder="ENTER USERNAME OR STUDENT NUMBER">
                                 </div>
                             </div>
-                            <div class="mb-4">
-                                <label for="password" class="form-label fw-semibold">Password</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0">
-                                        <i class="fas fa-lock text-muted"></i>
+                            
+                            <div class="form-group-cyber">
+                                <label for="password" class="form-label-cyber">SECURITY PASSCODE</label>
+                                <div class="input-group input-group-cyber">
+                                    <span class="input-icon">
+                                        <i class="fas fa-lock"></i>
                                     </span>
-                                    <input type="password" class="form-control border-start-0" id="password" name="password" required placeholder="Enter your password">
+                                    <input type="password" class="form-control form-control-cyber" id="password" name="password" required placeholder="ENTER SECURITY PASSCODE">
                                 </div>
                             </div>
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg fw-semibold py-2">
-                                    <i class="fas fa-sign-in-alt me-2"></i> Sign In
-                                </button>
-                            </div>
+                            
+                            <button type="submit" class="btn btn-login">
+                                <i class="fas fa-terminal me-2"></i> INITIATE ACCESS
+                            </button>
                         </form>
 
-                        <div class="mt-4 text-center">
-                            <small class="text-muted">
-                                <strong>Demo Credentials:</strong><br>
-                                Admin: <code>admin</code> / <code>password123</code><br>
-                                Students: Use student number as username
-                            </small>
+                        <!-- Demo Credentials -->
+                        <div class="demo-credentials">
+                            <div class="demo-title">TEST CREDENTIALS:</div>
+                            <div class="text-terminal small">
+                                ADMIN: <span class="demo-code">admin</span> / <span class="demo-code">password123</span><br>
+                                STUDENTS: USE STUDENT NUMBER AS USERNAME
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -64,4 +356,25 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Create cyber particles for login page
+    function createLoginParticles() {
+        const container = document.getElementById('loginParticles');
+        const particleCount = 30;
+        
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle-login';
+            particle.style.left = Math.random() * 100 + 'vw';
+            particle.style.animationDelay = Math.random() * 8 + 's';
+            particle.style.animationDuration = (4 + Math.random() * 6) + 's';
+            particle.style.background = Math.random() > 0.5 ? 'var(--cyber-blue)' : 'var(--cyber-pink)';
+            container.appendChild(particle);
+        }
+    }
+
+    // Initialize particles when page loads
+    window.onload = createLoginParticles;
+</script>
 {% endblock %}

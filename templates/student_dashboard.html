@@ -1,26 +1,233 @@
 {% extends "base.html" %}
 
-{% block title %}Student Dashboard{% endblock %}
+{% block title %}STUDENT DASHBOARD - FaceLogged Cyber System{% endblock %}
 
 {% block content %}
-<!-- Welcome Header -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-            <div class="card-body text-white p-4">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h2 class="fw-bold mb-2">Welcome, {{ student[1] }} {{ student[2] }}!</h2>
-                        <p class="mb-0 opacity-90">
-                            <i class="fas fa-id-card me-2"></i>Student Number: {{ student[3] }}
-                        </p>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <div class="feature-icon mx-auto" style="width: 80px; height: 80px;">
-                            <i class="fas fa-user-graduate fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
+<style>
+    .welcome-header {
+        background: linear-gradient(135deg, var(--cyber-blue), var(--cyber-purple));
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .student-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .attendance-summary {
+        background: rgba(17, 17, 34, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .attendance-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .attendance-table th {
+        font-family: 'Orbitron', monospace;
+        color: var(--cyber-blue);
+        text-align: left;
+        padding: 1rem;
+        border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+    }
+
+    .attendance-table td {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+        font-family: 'Exo 2', sans-serif;
+        color: var(--text-light);
+    }
+
+    .attendance-table tr:hover {
+        background: rgba(0, 243, 255, 0.05);
+    }
+
+    .progress-bar-attendance {
+        height: 8px;
+        background: rgba(0, 243, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .progress-good {
+        background: linear-gradient(90deg, var(--terminal-green), #00cc66);
+    }
+
+    .progress-warning {
+        background: linear-gradient(90deg, #ffc107, #ffb300);
+    }
+
+    .sidebar-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .face-status-card {
+        background: rgba(17, 17, 34, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .recent-attendance-card {
+        background: rgba(17, 17, 34, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    .quick-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .btn-quick-action {
+        background: rgba(0, 243, 255, 0.1);
+        border: 1px solid rgba(0, 243, 255, 0.3);
+        border-radius: 8px;
+        padding: 1.5rem 1rem;
+        text-decoration: none;
+        color: var(--text-light);
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .btn-quick-action:hover {
+        background: rgba(0, 243, 255, 0.2);
+        border-color: var(--cyber-blue);
+        color: var(--cyber-blue);
+        transform: translateY(-2px);
+    }
+
+    .module-badge {
+        background: rgba(0, 243, 255, 0.1);
+        color: var(--cyber-blue);
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        font-family: 'Orbitron', monospace;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .student-avatar {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, var(--cyber-blue), var(--cyber-purple));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--dark-bg);
+        font-size: 2rem;
+    }
+
+    .student-avatar-management {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, var(--cyber-blue), var(--cyber-purple));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--dark-bg);
+        font-size: 1.5rem;
+        margin: 0 auto;
+    }
+
+    .empty-state-ratings {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: var(--text-light);
+    }
+
+    .empty-icon-ratings {
+        width: 80px;
+        height: 80px;
+        background: rgba(0, 243, 255, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2rem;
+        color: var(--cyber-blue);
+    }
+
+    .student-list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .student-list-item:hover {
+        background: rgba(0, 243, 255, 0.05);
+    }
+
+    .face-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-family: 'Orbitron', monospace;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.8rem;
+    }
+
+    .face-registered {
+        background: rgba(0, 255, 136, 0.1);
+        color: var(--terminal-green);
+        border: 1px solid rgba(0, 255, 136, 0.3);
+    }
+
+    .face-not-registered {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+</style>
+
+<div class="welcome-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="cyber-text mb-2">WELCOME, {{ student[1] }} {{ student[2] }}!</h1>
+            <p class="text-light mb-0 opacity-90">
+                <i class="fas fa-id-card me-2"></i>STUDENT NUMBER: {{ student[3] }}
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="student-avatar" style="margin-left: auto;">
+                <i class="fas fa-user-graduate"></i>
             </div>
         </div>
     </div>
@@ -28,117 +235,120 @@
 
 <div class="row">
     <!-- Attendance Summary -->
-    <div class="col-lg-8 mb-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header">
-                <h5 class="card-title mb-0 text-white"><i class="fas fa-chart-line me-2"></i>Attendance Summary</h5>
-            </div>
-            <div class="card-body">
-                {% if module_attendance %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Module</th>
-                                <th>Code</th>
-                                <th>Attendance</th>
-                                <th>Threshold</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for module in module_attendance %}
-                            <tr>
-                                <td class="fw-semibold">{{ module.module_name }}</td>
-                                <td><span class="badge bg-light text-dark">{{ module.module_code }}</span></td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="progress flex-grow-1 me-3" style="height: 8px;">
-                                            <div class="progress-bar {% if module.attendance >= module.threshold %}bg-success{% else %}bg-warning{% endif %}" 
-                                                 role="progressbar" style="width: {{ module.attendance }}%;">
-                                            </div>
-                                        </div>
-                                        <span class="fw-semibold">{{ module.attendance }}%</span>
+    <div class="col-lg-8">
+        <div class="attendance-summary">
+            <h4 class="cyber-text mb-4">
+                <i class="fas fa-chart-line me-2"></i>ATTENDANCE SUMMARY
+            </h4>
+            
+            {% if module_attendance %}
+            <div class="table-responsive">
+                <table class="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>MODULE</th>
+                            <th>CODE</th>
+                            <th>ATTENDANCE</th>
+                            <th>THRESHOLD</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for module in module_attendance %}
+                        <tr>
+                            <td class="fw-semibold text-light">{{ module.module_name }}</td>
+                            <td><span class="module-badge">{{ module.module_code }}</span></td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress-bar-attendance flex-grow-1 me-3">
+                                        <div class="progress-fill {% if module.attendance >= module.threshold %}progress-good{% else %}progress-warning{% endif %}" 
+                                             style="width: {{ module.attendance }}%;"></div>
                                     </div>
-                                </td>
-                                <td>{{ module.threshold }}%</td>
-                                <td>
-                                    {% if module.attendance >= module.threshold %}
-                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Good</span>
-                                    {% else %}
-                                    <span class="badge bg-warning"><i class="fas fa-exclamation me-1"></i>Low</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-book fa-4x text-muted mb-3"></i>
-                    <h5 class="text-muted">No Modules Enrolled</h5>
-                    <p class="text-muted">You are not enrolled in any modules yet.</p>
-                </div>
-                {% endif %}
+                                    <span class="fw-semibold text-cyber">{{ module.attendance }}%</span>
+                                </div>
+                            </td>
+                            <td class="text-terminal">{{ module.threshold }}%</td>
+                            <td>
+                                {% if module.attendance >= module.threshold %}
+                                <span class="face-status-badge face-registered">
+                                    <i class="fas fa-check me-1"></i>GOOD
+                                </span>
+                                {% else %}
+                                <span class="face-status-badge face-not-registered">
+                                    <i class="fas fa-exclamation me-1"></i>LOW
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
+            {% else %}
+            <div class="empty-state-ratings">
+                <div class="empty-icon-ratings">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h5 class="text-cyber mb-2">NO MODULES ENROLLED</h5>
+                <p class="text-light">You are not enrolled in any modules yet.</p>
+            </div>
+            {% endif %}
         </div>
     </div>
 
     <!-- Sidebar Cards -->
-    <div class="col-lg-4 mb-4">
-        <!-- Face Registration Status -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header">
-                <h6 class="card-title mb-0 text-white"><i class="fas fa-camera me-2"></i>Face Registration</h6>
-            </div>
-            <div class="card-body text-center py-4">
+    <div class="col-lg-4">
+        <div class="sidebar-cards">
+            <!-- Face Registration Status -->
+            <div class="face-status-card">
+                <h6 class="cyber-text mb-3">
+                    <i class="fas fa-camera me-2"></i>FACE REGISTRATION
+                </h6>
+                
                 {% if face_registered %}
-                <div class="feature-icon mx-auto mb-3 bg-success">
+                <div class="student-avatar-management bg-success mb-3">
                     <i class="fas fa-check"></i>
                 </div>
-                <h6 class="text-success fw-semibold">Face Registered</h6>
-                <p class="text-muted small">Your face data is ready for attendance</p>
+                <h6 class="text-terminal fw-semibold">FACE REGISTERED</h6>
+                <p class="text-light small">Your face data is ready for attendance</p>
                 {% else %}
-                <div class="feature-icon mx-auto mb-3 bg-warning">
+                <div class="student-avatar-management bg-warning mb-3">
                     <i class="fas fa-exclamation"></i>
                 </div>
-                <h6 class="text-warning fw-semibold">Face Not Registered</h6>
-                <p class="text-muted small mb-3">Register your face for automatic attendance</p>
-                <a href="{{ url_for('register_face') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-camera me-1"></i> Register Now
+                <h6 class="text-warning fw-semibold">FACE NOT REGISTERED</h6>
+                <p class="text-light small mb-3">Register your face for automatic attendance</p>
+                <a href="{{ url_for('register_face') }}" class="btn btn-submit btn-sm">
+                    <i class="fas fa-camera me-1"></i> REGISTER NOW
                 </a>
                 {% endif %}
             </div>
-        </div>
 
-        <!-- Recent Attendance -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-header">
-                <h6 class="card-title mb-0 text-white"><i class="fas fa-history me-2"></i>Recent Attendance</h6>
-            </div>
-            <div class="card-body">
+            <!-- Recent Attendance -->
+            <div class="recent-attendance-card">
+                <h6 class="cyber-text mb-3">
+                    <i class="fas fa-history me-2"></i>RECENT ATTENDANCE
+                </h6>
+                
                 {% if recent_attendance %}
-                <div class="list-group list-group-flush">
+                <div class="student-list">
                     {% for record in recent_attendance %}
-                    <div class="list-group-item px-0 border-0">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h6 class="mb-1 fw-semibold">{{ record[1] }}</h6>
-                                <small class="text-muted">{{ record[2] }}</small>
-                            </div>
-                            <span class="badge {% if record[3] == 'Present' %}bg-success{% else %}bg-danger{% endif %}">
-                                {{ record[3] }}
-                            </span>
+                    <div class="student-list-item">
+                        <div class="flex-grow-1">
+                            <h6 class="text-light fw-semibold mb-1">{{ record[1] }}</h6>
+                            <small class="text-terminal">{{ record[2] }}</small>
                         </div>
-                        <small class="text-muted">{{ record[0] }}</small>
+                        <span class="face-status-badge {% if record[3] == 'Present' %}face-registered{% else %}face-not-registered{% endif %}" style="font-size: 0.7rem;">
+                            {{ record[3] }}
+                        </span>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
                 <div class="text-center py-3">
-                    <i class="fas fa-calendar-times fa-2x text-muted mb-2"></i>
-                    <p class="text-muted small">No attendance records yet</p>
+                    <div class="empty-icon-ratings" style="width: 60px; height: 60px;">
+                        <i class="fas fa-calendar-times"></i>
+                    </div>
+                    <p class="text-light small">No attendance records yet</p>
                 </div>
                 {% endif %}
             </div>
@@ -147,36 +357,25 @@
 </div>
 
 <!-- Quick Actions -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header">
-                <h5 class="card-title mb-0 text-white"><i class="fas fa-rocket me-2"></i>Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <a href="{{ url_for('student_attendance') }}" class="btn btn-outline-primary w-100 py-3">
-                            <i class="fas fa-calendar-check me-2"></i> View Attendance
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ url_for('register_face') }}" class="btn btn-outline-success w-100 py-3">
-                            <i class="fas fa-camera me-2"></i> Register Face
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ url_for('rate_lecture') }}" class="btn btn-outline-info w-100 py-3">
-                            <i class="fas fa-star me-2"></i> Rate Lectures
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary w-100 py-3">
-                            <i class="fas fa-sign-out-alt me-2"></i> Logout
-                        </a>
-                    </div>
-                </div>
-            </div>
+<div class="ratings-card mt-4">
+    <div class="card-body">
+        <h4 class="cyber-text mb-4">
+            <i class="fas fa-rocket me-2"></i>QUICK ACTIONS
+        </h4>
+        
+        <div class="quick-actions-grid">
+            <a href="{{ url_for('student_attendance') }}" class="btn-quick-action">
+                <i class="fas fa-calendar-check me-2"></i> VIEW ATTENDANCE
+            </a>
+            <a href="{{ url_for('register_face') }}" class="btn-quick-action">
+                <i class="fas fa-camera me-2"></i> REGISTER FACE
+            </a>
+            <a href="{{ url_for('rate_lecture') }}" class="btn-quick-action">
+                <i class="fas fa-star me-2"></i> RATE LECTURES
+            </a>
+            <a href="{{ url_for('logout') }}" class="btn-quick-action">
+                <i class="fas fa-sign-out-alt me-2"></i> LOGOUT
+            </a>
         </div>
     </div>
 </div>

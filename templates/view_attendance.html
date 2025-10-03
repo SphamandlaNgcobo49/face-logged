@@ -1,148 +1,241 @@
 {% extends "base.html" %}
 
-{% block title %}View Attendance - {{ module_code }}{% endblock %}
+{% block title %}ATTENDANCE RECORDS - {{ module_code }}{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title mb-0 text-white">
-                    <i class="fas fa-list me-2"></i>Attendance Records - {{ module_code }}
-                </h4>
-                <div>
-                    <a href="{{ url_for('export_attendance', module_id=module_id) }}?format=pdf" class="btn btn-warning btn-sm">
-                        <i class="fas fa-file-pdf me-1"></i> Export PDF
-                    </a>
-                    <a href="{{ url_for('export_attendance', module_id=module_id) }}?format=excel" class="btn btn-success btn-sm">
-                        <i class="fas fa-file-excel me-1"></i> Export Excel
-                    </a>
-                </div>
-            </div>
-            <div class="card-body">
-                <!-- Filters -->
-                <div class="row mb-4">
-                    <div class="col-lg-8">
-                        <div class="card border-0 bg-light">
-                            <div class="card-body">
-                                <form method="GET" class="row g-3 align-items-end">
-                                    <div class="col-md-4">
-                                        <label for="date" class="form-label fw-semibold">Filter by Date</label>
-                                        <select class="form-select border-0 shadow-sm" id="date" name="date" onchange="this.form.submit()">
-                                            <option value="">All Dates</option>
-                                            {% for date in dates %}
-                                            <option value="{{ date[0] }}" {% if current_date == date[0] %}selected{% endif %}>
-                                                {{ date[0] }}
-                                            </option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="student" class="form-label fw-semibold">Filter by Student</label>
-                                        <input type="text" class="form-control border-0 shadow-sm" id="student" name="student" 
-                                               value="{{ current_student }}" placeholder="Name or Student Number">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="d-grid gap-2">
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="fas fa-filter me-2"></i> Apply Filters
-                                            </button>
-                                            <a href="{{ url_for('view_attendance', module_id=module_id) }}" class="btn btn-outline-secondary">
-                                                Clear Filters
-                                            </a>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4">
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <div class="card border-0 bg-primary text-white text-center">
-                                    <div class="card-body py-3">
-                                        <h6 class="mb-1">Module</h6>
-                                        <h5 class="mb-0 fw-bold">{{ module_code }}</h5>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="card border-0 bg-success text-white text-center">
-                                    <div class="card-body py-3">
-                                        <h6 class="mb-1">Records</h6>
-                                        <h5 class="mb-0 fw-bold">{{ attendance_records|length }}</h5>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<style>
+    .attendance-records-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .filters-section {
+        background: rgba(17, 17, 34, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stats-grid-attendance {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .records-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .records-table th {
+        font-family: 'Orbitron', monospace;
+        color: var(--cyber-blue);
+        text-align: left;
+        padding: 1rem;
+        border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+    }
+    
+    .records-table td {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+        font-family: 'Exo 2', sans-serif;
+        color: var(--text-light);
+    }
+    
+    .records-table tr:hover {
+        background: rgba(0, 243, 255, 0.05);
+    }
+    
+    .export-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+    
+    .btn-export {
+        background: rgba(0, 243, 255, 0.1);
+        border: 1px solid rgba(0, 243, 255, 0.3);
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        font-family: 'Orbitron', monospace;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.8rem;
+        color: var(--text-light);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-export:hover {
+        background: rgba(0, 243, 255, 0.2);
+        border-color: var(--cyber-blue);
+        color: var(--cyber-blue);
+    }
+    
+    .btn-pdf {
+        background: rgba(220, 53, 69, 0.1);
+        border-color: rgba(220, 53, 69, 0.3);
+        color: #dc3545;
+    }
+    
+    .btn-excel {
+        background: rgba(40, 167, 69, 0.1);
+        border-color: rgba(40, 167, 69, 0.3);
+        color: #28a745;
+    }
+</style>
 
-                {% if attendance_records %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Student Number</th>
-                                <th>Name</th>
-                                <th>Date</th>
-                                <th>Time</th>
-                                <th>Topic</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for record in attendance_records %}
-                            <tr>
-                                <td class="fw-semibold">{{ record[0] }}</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="feature-icon me-3" style="width: 40px; height: 40px;">
-                                            <i class="fas fa-user-graduate"></i>
-                                        </div>
-                                        <div>
-                                            <div class="fw-semibold">{{ record[1] }} {{ record[2] }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="fw-semibold">{{ record[3] }}</td>
-                                <td>{{ record[4] }}</td>
-                                <td>
-                                    {% if record[6] %}
-                                    <span class="text-muted">{{ record[6] }}</span>
-                                    {% else %}
-                                    <span class="text-muted fst-italic">General Lecture</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if record[5] == 'Present' %}
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-check me-1"></i>Present
-                                    </span>
-                                    {% else %}
-                                    <span class="badge bg-danger">
-                                        <i class="fas fa-times me-1"></i>Absent
-                                    </span>
-                                    {% endif %}
-                                </td>
-                            </tr>
+<div class="page-header">
+    <h1 class="page-title">ATTENDANCE RECORDS</h1>
+    <div class="page-subtitle">COMPREHENSIVE ATTENDANCE HISTORY - {{ module_code }}</div>
+</div>
+
+<div class="attendance-records-container">
+    <!-- Filters and Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="filters-section">
+                <form method="GET" class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <label for="date" class="form-label-cyber mb-2">FILTER BY DATE</label>
+                        <select class="form-control select-cyber" id="date" name="date" onchange="this.form.submit()">
+                            <option value="">ALL DATES</option>
+                            {% for date in dates %}
+                            <option value="{{ date[0] }}" {% if current_date == date[0] %}selected{% endif %}>
+                                {{ date[0] }}
+                            </option>
                             {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <div class="feature-icon mx-auto bg-light mb-3" style="width: 80px; height: 80px;">
-                        <i class="fas fa-search fa-2x text-muted"></i>
+                        </select>
                     </div>
-                    <h5 class="text-muted">No Attendance Records Found</h5>
-                    <p class="text-muted">No attendance records found for the selected filters.</p>
-                    <a href="{{ url_for('view_attendance', module_id=module_id) }}" class="btn btn-primary">
-                        <i class="fas fa-sync me-2"></i> Clear Filters
+                    <div class="col-md-5">
+                        <label for="student" class="form-label-cyber mb-2">FILTER BY STUDENT</label>
+                        <input type="text" class="form-control form-control-cyber" id="student" name="student" 
+                               value="{{ current_student }}" placeholder="NAME OR STUDENT NUMBER">
+                    </div>
+                    <div class="col-md-2">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-submit">
+                                <i class="fas fa-filter me-2"></i> APPLY
+                            </button>
+                            <a href="{{ url_for('view_attendance', module_id=module_id) }}" class="btn btn-cancel">
+                                CLEAR
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="stats-grid-attendance">
+                <div class="stat-card-cyber">
+                    <div class="stat-icon-cyber">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="stat-number">{{ module_code }}</div>
+                    <div class="stat-label">MODULE CODE</div>
+                </div>
+                <div class="stat-card-cyber">
+                    <div class="stat-icon-cyber" style="background: linear-gradient(135deg, var(--terminal-green), #00cc66);">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <div class="stat-number">{{ attendance_records|length }}</div>
+                    <div class="stat-label">TOTAL RECORDS</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Records -->
+    <div class="ratings-card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="cyber-text">
+                    <i class="fas fa-list me-2"></i>ATTENDANCE HISTORY
+                </h4>
+                <div class="export-buttons">
+                    <a href="{{ url_for('export_attendance', module_id=module_id) }}?format=pdf" class="btn-export btn-pdf">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </a>
+                    <a href="{{ url_for('export_attendance', module_id=module_id) }}?format=excel" class="btn-export btn-excel">
+                        <i class="fas fa-file-excel"></i> EXCEL
                     </a>
                 </div>
-                {% endif %}
             </div>
+            
+            {% if attendance_records %}
+            <div class="table-responsive">
+                <table class="records-table">
+                    <thead>
+                        <tr>
+                            <th>STUDENT NUMBER</th>
+                            <th>NAME</th>
+                            <th>DATE</th>
+                            <th>TIME</th>
+                            <th>TOPIC</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in attendance_records %}
+                        <tr>
+                            <td class="fw-semibold text-terminal">{{ record[0] }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="student-avatar-small">
+                                        <i class="fas fa-user-graduate"></i>
+                                    </div>
+                                    <div class="ms-2">
+                                        <div class="text-light fw-semibold">{{ record[1] }} {{ record[2] }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="fw-semibold">{{ record[3] }}</td>
+                            <td class="text-terminal">{{ record[4] }}</td>
+                            <td>
+                                {% if record[6] %}
+                                <span class="text-light">{{ record[6] }}</span>
+                                {% else %}
+                                <span class="text-muted fst-italic">General Lecture</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if record[5] == 'Present' %}
+                                <span class="face-status-badge face-registered">
+                                    <i class="fas fa-check me-1"></i>PRESENT
+                                </span>
+                                {% else %}
+                                <span class="face-status-badge face-not-registered">
+                                    <i class="fas fa-times me-1"></i>ABSENT
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state-ratings">
+                <div class="empty-icon-ratings">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h5 class="text-cyber mb-2">NO RECORDS FOUND</h5>
+                <p class="text-light">No attendance records found for the selected filters.</p>
+                <a href="{{ url_for('view_attendance', module_id=module_id) }}" class="btn btn-submit">
+                    <i class="fas fa-sync me-2"></i> CLEAR FILTERS
+                </a>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

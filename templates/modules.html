@@ -1,180 +1,180 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modules - Face Logged</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .sidebar {
-            background-color: #2E8B57;
-            color: white;
-            height: 100vh;
-            position: fixed;
-        }
-        .sidebar a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 15px;
-            display: block;
-            transition: background-color 0.3s;
-        }
-        .sidebar a:hover {
-            background-color: #3CB371;
-        }
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            background-color: #f8f9fa;
-        }
-        .navbar {
-            background-color: white;
-            border-bottom: 2px solid #2E8B57;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .btn-primary {
-            background-color: #2E8B57;
-            border-color: #2E8B57;
-        }
-        .btn-primary:hover {
-            background-color: #3CB371;
-            border-color: #3CB371;
-        }
-        .card {
-            border: 1px solid #2E8B57;
-            box-shadow: 0 2px 4px rgba(46, 139, 87, 0.1);
-        }
-        .card-header {
-            background-color: #2E8B57;
-            color: white;
-            border-bottom: 1px solid #2E8B57;
-        }
-        .table thead {
-            background-color: #2E8B57;
-            color: white;
-        }
-        .badge {
-            background-color: #2E8B57;
-        }
-    </style>
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#" style="color: #2E8B57;">
-                <i class="fas fa-camera"></i> Face Logged - Admin
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ url_for('logout') }}" style="color: #2E8B57;">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
-            </div>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-2 sidebar">
-                <div class="p-3">
-                    <h5><i class="fas fa-user-shield"></i> Admin Panel</h5>
-                </div>
-                <ul class="nav flex-column">
-                    <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                    <li><a href="{{ url_for('lecturers') }}"><i class="fas fa-chalkboard-teacher"></i> Lecturers</a></li>
-                    <li><a href="{{ url_for('students') }}"><i class="fas fa-user-graduate"></i> Students</a></li>
-                    <li><a href="{{ url_for('modules') }}"><i class="fas fa-book"></i> Modules</a></li>
-                    <li><a href="{{ url_for('admin_manage_faces') }}"><i class="fas fa-id-card"></i> Manage Faces</a></li>
-                </ul>
-            </div>
+{% block title %}MODULES MANAGEMENT - FaceLogged Cyber System{% endblock %}
 
-            <!-- Main Content -->
-            <div class="col-md-10 main-content">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 style="color: #2E8B57;"><i class="fas fa-book"></i> Modules Management</h2>
-                    <a href="{{ url_for('add_module') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add Module
-                    </a>
-                </div>
+{% block content %}
+<style>
+    .module-grid {
+        display: grid;
+        gap: 1.5rem;
+    }
+    
+    .module-management-card {
+        background: rgba(17, 17, 34, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .module-management-card:hover {
+        border-color: var(--cyber-blue);
+        box-shadow: 0 8px 25px rgba(0, 243, 255, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    .module-code-large {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--cyber-blue);
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+    
+    .module-name {
+        font-family: 'Exo 2', sans-serif;
+        color: var(--text-light);
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .module-details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .module-detail {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+    
+    .detail-value {
+        font-family: 'Orbitron', monospace;
+        color: var(--cyber-blue);
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    
+    .detail-description {
+        font-family: 'Exo 2', sans-serif;
+        color: var(--text-light);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .module-description {
+        background: rgba(0, 243, 255, 0.05);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        font-family: 'Exo 2', sans-serif;
+        color: var(--text-light);
+        font-size: 0.9rem;
+    }
+</style>
 
-                <!-- Flash Messages -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0"><i class="fas fa-list"></i> Modules List</h5>
-                    </div>
-                    <div class="card-body">
-                        {% if modules %}
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Code</th>
-                                            <th>Name</th>
-                                            <th>Description</th>
-                                            <th>Credits</th>
-                                            <th>Semester</th>
-                                            <th>Department</th>
-                                            <th>Lecturer</th>
-                                            <th>Classes</th>
-                                            <th>Threshold</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for module in modules %}
-                                            <tr>
-                                                <td><strong>{{ module[1] }}</strong></td>
-                                                <td>{{ module[2] }}</td>
-                                                <td>{{ module[3] or 'N/A' }}</td>
-                                                <td><span class="badge">{{ module[4] }}</span></td>
-                                                <td>Semester {{ module[5] }}</td>
-                                                <td>{{ module[6] }}</td>
-                                                <td>{{ module[7] }} {{ module[8] }}</td>
-                                                <td>{{ module[9] }}</td>
-                                                <td>{{ module[10] }}%</td>
-                                                <td>
-                                                    <div class="btn-group" role="group">
-                                                        <a href="{{ url_for('edit_module', module_id=module[0]) }}" class="btn btn-warning btn-sm">
-                                                            <i class="fas fa-edit"></i> Edit
-                                                        </a>
-                                                        <form method="POST" action="{{ url_for('delete_module', module_id=module[0]) }}" style="display: inline;">
-                                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this module?')">
-                                                                <i class="fas fa-trash"></i> Delete
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {% else %}
-                            <div class="text-center py-4">
-                                <i class="fas fa-book fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">No modules found.</p>
-                                <a href="{{ url_for('add_module') }}" class="btn btn-primary">Add First Module</a>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="management-header">
+    <div>
+        <h1 class="page-title">MODULES MANAGEMENT</h1>
+        <div class="page-subtitle">COURSE MODULE ADMINISTRATION</div>
     </div>
+    <a href="{{ url_for('add_module') }}" class="btn btn-submit">
+        <i class="fas fa-plus me-2"></i> ADD MODULE
+    </a>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mb-4" role="alert">
+                <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'warning' %}exclamation-triangle{% elif category == 'danger' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" style="filter: invert(1);"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="ratings-card">
+    <div class="card-body">
+        <h4 class="cyber-text mb-4">
+            <i class="fas fa-list me-2"></i>MODULES CATALOG
+        </h4>
+        
+        {% if modules %}
+        <div class="module-grid">
+            {% for module in modules %}
+            <div class="module-management-card">
+                <div class="module-code-large">{{ module[1] }}</div>
+                <div class="module-name">{{ module[2] }}</div>
+                
+                {% if module[3] %}
+                <div class="module-description">
+                    {{ module[3] }}
+                </div>
+                {% endif %}
+                
+                <div class="module-details-grid">
+                    <div class="module-detail">
+                        <span class="detail-value">{{ module[4] }}</span>
+                        <span class="detail-description">CREDITS</span>
+                    </div>
+                    <div class="module-detail">
+                        <span class="detail-value">SEM {{ module[5] }}</span>
+                        <span class="detail-description">SEMESTER</span>
+                    </div>
+                    <div class="module-detail">
+                        <span class="detail-value">{{ module[6] }}</span>
+                        <span class="detail-description">DEPARTMENT</span>
+                    </div>
+                    <div class="module-detail">
+                        <span class="detail-value">{{ module[7] }} {{ module[8] }}</span>
+                        <span class="detail-description">LECTURER</span>
+                    </div>
+                    <div class="module-detail">
+                        <span class="detail-value">{{ module[9] }}</span>
+                        <span class="detail-description">CLASSES</span>
+                    </div>
+                    <div class="module-detail">
+                        <span class="detail-value">{{ module[10] }}%</span>
+                        <span class="detail-description">THRESHOLD</span>
+                    </div>
+                </div>
+                
+                <div class="lecturer-actions">
+                    <a href="{{ url_for('edit_module', module_id=module[0]) }}" class="btn-module btn-edit">
+                        <i class="fas fa-edit"></i> EDIT
+                    </a>
+                    <form method="POST" action="{{ url_for('delete_module', module_id=module[0]) }}" style="display: inline;">
+                        <button type="submit" class="btn-module btn-delete" onclick="return confirm('CONFIRM MODULE DELETION? THIS ACTION IS IRREVERSIBLE.')">
+                            <i class="fas fa-trash"></i> DELETE
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state-ratings">
+            <div class="empty-icon-ratings">
+                <i class="fas fa-book"></i>
+            </div>
+            <h5 class="text-cyber mb-2">NO MODULES FOUND</h5>
+            <p class="text-light">No modules are currently registered in the system.</p>
+            <a href="{{ url_for('add_module') }}" class="btn btn-submit">
+                <i class="fas fa-plus me-2"></i> ADD FIRST MODULE
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

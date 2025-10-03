@@ -1,77 +1,313 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Dashboard{% endblock %}
-{% block header %}Admin Dashboard{% endblock %}
+{% block title %}ADMIN CONTROL PANEL - FaceLogged{% endblock %}
 
 {% block content %}
-<div class="row">
-    <!-- Statistics Cards -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-8">
-                        <div class="text-muted fw-semibold text-uppercase small">Total Students</div>
-                        <div class="h3 fw-bold text-dark mb-0">{{ student_count }}</div>
+<style>
+    .dashboard-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+    }
+    
+    .dashboard-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 2rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--cyber-blue), var(--cyber-pink));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: 2px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .dashboard-subtitle {
+        font-family: 'Exo 2', sans-serif;
+        color: var(--cyber-blue);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 1rem;
+    }
+    
+    .stat-card {
+        background: rgba(17, 17, 34, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.1), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .stat-card:hover::before {
+        left: 100%;
+    }
+    
+    .stat-card:hover {
+        border-color: var(--cyber-blue);
+        box-shadow: 0 8px 25px rgba(0, 243, 255, 0.2);
+        transform: translateY(-3px);
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--cyber-blue), var(--cyber-purple));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--dark-bg);
+        font-size: 1.5rem;
+        margin-left: auto;
+    }
+    
+    .stat-number {
+        font-family: 'Orbitron', monospace;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--cyber-blue);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        font-family: 'Exo 2', sans-serif;
+        color: var(--text-light);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.8rem;
+    }
+    
+    .system-status {
+        color: var(--terminal-green) !important;
+    }
+    
+    .quick-actions-card {
+        background: rgba(17, 17, 34, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+    
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .action-btn {
+        background: rgba(0, 243, 255, 0.1);
+        border: 1px solid rgba(0, 243, 255, 0.3);
+        border-radius: 8px;
+        padding: 1.5rem 1rem;
+        text-decoration: none;
+        color: var(--text-light);
+        transition: all 0.3s ease;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .action-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .action-btn:hover::before {
+        left: 100%;
+    }
+    
+    .action-btn:hover {
+        background: rgba(0, 243, 255, 0.2);
+        border-color: var(--cyber-blue);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 243, 255, 0.2);
+        color: var(--cyber-blue);
+    }
+    
+    .action-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--cyber-blue);
+    }
+    
+    .action-text {
+        font-family: 'Orbitron', monospace;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+    }
+    
+    .recent-activity-card {
+        background: rgba(17, 17, 34, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-radius: 12px;
+        height: 100%;
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .activity-item:hover {
+        background: rgba(0, 243, 255, 0.05);
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, var(--cyber-blue), var(--cyber-purple));
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--dark-bg);
+        font-size: 1.2rem;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .activity-content {
+        flex-grow: 1;
+    }
+    
+    .activity-name {
+        font-family: 'Exo 2', sans-serif;
+        font-weight: 600;
+        color: var(--text-light);
+        margin-bottom: 0.2rem;
+    }
+    
+    .activity-role {
+        font-family: 'Exo 2', sans-serif;
+        color: var(--cyber-blue);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .activity-date {
+        font-family: 'Orbitron', monospace;
+        color: var(--terminal-green);
+        font-size: 0.8rem;
+        text-align: right;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: var(--text-light);
+    }
+    
+    .empty-icon {
+        font-size: 3rem;
+        color: rgba(0, 243, 255, 0.3);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-text {
+        font-family: 'Exo 2', sans-serif;
+        color: rgba(255, 255, 255, 0.5);
+    }
+</style>
+
+<div class="dashboard-header">
+    <h1 class="dashboard-title">ADMIN CONTROL PANEL</h1>
+    <div class="dashboard-subtitle">SYSTEM OVERVIEW & MANAGEMENT</div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-5">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="stat-number">{{ student_count }}</div>
+                        <div class="stat-label">Total Students</div>
                     </div>
-                    <div class="col-4 text-end">
-                        <div class="feature-icon">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-user-graduate"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-8">
-                        <div class="text-muted fw-semibold text-uppercase small">Total Lecturers</div>
-                        <div class="h3 fw-bold text-dark mb-0">{{ lecturer_count }}</div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="stat-number">{{ lecturer_count }}</div>
+                        <div class="stat-label">Total Lecturers</div>
                     </div>
-                    <div class="col-4 text-end">
-                        <div class="feature-icon">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                        </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-8">
-                        <div class="text-muted fw-semibold text-uppercase small">Total Modules</div>
-                        <div class="h3 fw-bold text-dark mb-0">{{ module_count }}</div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="stat-number">{{ module_count }}</div>
+                        <div class="stat-label">Total Modules</div>
                     </div>
-                    <div class="col-4 text-end">
-                        <div class="feature-icon">
-                            <i class="fas fa-book"></i>
-                        </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-book"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-8">
-                        <div class="text-muted fw-semibold text-uppercase small">System Status</div>
-                        <div class="h3 fw-bold text-success mb-0">Online</div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="stat-number system-status">Online</div>
+                        <div class="stat-label">System Status</div>
                     </div>
-                    <div class="col-4 text-end">
-                        <div class="feature-icon">
-                            <i class="fas fa-server"></i>
-                        </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-server"></i>
                     </div>
                 </div>
             </div>
@@ -80,103 +316,105 @@
 </div>
 
 <!-- Quick Actions -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header">
-                <h5 class="card-title mb-0 text-white"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <a href="{{ url_for('add_lecturer') }}" class="btn btn-primary w-100 py-3">
-                            <i class="fas fa-plus me-2"></i> Add Lecturer
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ url_for('add_student') }}" class="btn btn-success w-100 py-3">
-                            <i class="fas fa-plus me-2"></i> Add Student
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ url_for('add_module') }}" class="btn btn-info w-100 py-3">
-                            <i class="fas fa-plus me-2"></i> Add Module
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ url_for('students') }}" class="btn btn-warning w-100 py-3">
-                            <i class="fas fa-list me-2"></i> View All
-                        </a>
-                    </div>
+<div class="card quick-actions-card">
+    <div class="card-header">
+        <h5 class="card-title mb-0 cyber-text">
+            <i class="fas fa-bolt me-2"></i>QUICK ACTIONS
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="actions-grid">
+            <a href="{{ url_for('add_lecturer') }}" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-chalkboard-teacher"></i>
                 </div>
-            </div>
+                <div class="action-text">Add Lecturer</div>
+            </a>
+            <a href="{{ url_for('add_student') }}" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div class="action-text">Add Student</div>
+            </a>
+            <a href="{{ url_for('add_module') }}" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div class="action-text">Add Module</div>
+            </a>
+            <a href="{{ url_for('students') }}" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-list"></i>
+                </div>
+                <div class="action-text">View All</div>
+            </a>
         </div>
     </div>
 </div>
 
 <!-- Recent Activity -->
-<div class="row">
+<div class="row g-4">
     <div class="col-md-6">
-        <div class="card border-0 shadow-sm">
+        <div class="card recent-activity-card">
             <div class="card-header">
-                <h5 class="card-title mb-0 text-white"><i class="fas fa-users me-2"></i>Recent Students</h5>
+                <h5 class="card-title mb-0 cyber-text">
+                    <i class="fas fa-users me-2"></i>RECENT STUDENTS
+                </h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if recent_students %}
-                <div class="list-group list-group-flush">
                     {% for student in recent_students %}
-                    <div class="list-group-item px-0 border-0">
-                        <div class="d-flex align-items-center">
-                            <div class="feature-icon me-3" style="width: 45px; height: 45px;">
-                                <i class="fas fa-user-graduate"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-0 fw-semibold">{{ student[1] }} {{ student[2] }}</h6>
-                                <small class="text-muted">New {{ student[0] }}</small>
-                            </div>
-                            <small class="text-muted">{{ student[3][:10] }}</small>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-user-graduate"></i>
                         </div>
+                        <div class="activity-content">
+                            <div class="activity-name">{{ student[1] }} {{ student[2] }}</div>
+                            <div class="activity-role">New {{ student[0] }}</div>
+                        </div>
+                        <div class="activity-date">{{ student[3][:10] }}</div>
                     </div>
                     {% endfor %}
-                </div>
                 {% else %}
-                <div class="text-center py-4">
-                    <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">No recent students</p>
-                </div>
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="empty-text">No recent students</div>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
     <div class="col-md-6">
-        <div class="card border-0 shadow-sm">
+        <div class="card recent-activity-card">
             <div class="card-header">
-                <h5 class="card-title mb-0 text-white"><i class="fas fa-chalkboard-teacher me-2"></i>Recent Lecturers</h5>
+                <h5 class="card-title mb-0 cyber-text">
+                    <i class="fas fa-chalkboard-teacher me-2"></i>RECENT LECTURERS
+                </h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if recent_lecturers %}
-                <div class="list-group list-group-flush">
                     {% for lecturer in recent_lecturers %}
-                    <div class="list-group-item px-0 border-0">
-                        <div class="d-flex align-items-center">
-                            <div class="feature-icon me-3" style="width: 45px; height: 45px;">
-                                <i class="fas fa-chalkboard-teacher"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-0 fw-semibold">{{ lecturer[1] }} {{ lecturer[2] }}</h6>
-                                <small class="text-muted">New {{ lecturer[0] }}</small>
-                            </div>
-                            <small class="text-muted">{{ lecturer[3][:10] }}</small>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-chalkboard-teacher"></i>
                         </div>
+                        <div class="activity-content">
+                            <div class="activity-name">{{ lecturer[1] }} {{ lecturer[2] }}</div>
+                            <div class="activity-role">New {{ lecturer[0] }}</div>
+                        </div>
+                        <div class="activity-date">{{ lecturer[3][:10] }}</div>
                     </div>
                     {% endfor %}
-                </div>
                 {% else %}
-                <div class="text-center py-4">
-                    <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">No recent lecturers</p>
-                </div>
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                        <div class="empty-text">No recent lecturers</div>
+                    </div>
                 {% endif %}
             </div>
         </div>

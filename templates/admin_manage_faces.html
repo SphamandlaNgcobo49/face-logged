@@ -1,145 +1,249 @@
 {% extends "base.html" %}
 
-{% block title %}Manage Student Faces{% endblock %}
+{% block title %}FACE MANAGEMENT - FaceLogged Cyber System{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header">
-                <h4 class="card-title mb-0 text-white">
-                    <i class="fas fa-camera me-2"></i>Student Face Management
-                </h4>
-            </div>
-            <div class="card-body">
-                {% if students %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Student ID</th>
-                                <th>Name</th>
-                                <th>Student Number</th>
-                                <th>Face Registered</th>
-                                <th>Registration Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for student in students %}
-                            <tr>
-                                <td class="fw-semibold">{{ student[0] }}</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="feature-icon me-3" style="width: 40px; height: 40px;">
-                                            <i class="fas fa-user-graduate"></i>
-                                        </div>
-                                        <div>
-                                            <div class="fw-semibold">{{ student[2] }} {{ student[3] }}</div>
-                                            <small class="text-muted">{{ student[1] }}</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td><span class="badge bg-light text-dark">{{ student[1] }}</span></td>
-                                <td>
-                                    {% if student[4] %}
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-check me-1"></i>Yes
-                                    </span>
-                                    {% else %}
-                                    <span class="badge bg-warning">
-                                        <i class="fas fa-times me-1"></i>No
-                                    </span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if student[6] %}
-                                    <span class="text-muted">{{ student[6][:10] }}</span>
-                                    {% else %}
-                                    <span class="text-muted fst-italic">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if student[4] %}
-                                    <form method="POST" action="{{ url_for('admin_reset_face', student_id=student[0]) }}" 
-                                          class="d-inline" onsubmit="return confirm('Are you sure you want to reset face registration for {{ student[2] }}? This action cannot be undone.');">
-                                        <button type="submit" class="btn btn-warning btn-sm">
-                                            <i class="fas fa-redo me-1"></i> Reset Face
-                                        </button>
-                                    </form>
-                                    {% else %}
-                                    <span class="text-muted fst-italic">No action available</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <div class="feature-icon mx-auto bg-light mb-3" style="width: 80px; height: 80px;">
-                        <i class="fas fa-user-graduate fa-2x text-muted"></i>
-                    </div>
-                    <h5 class="text-muted">No Students Found</h5>
-                    <p class="text-muted">No students are currently registered in the system.</p>
-                    <a href="{{ url_for('add_student') }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i> Add First Student
-                    </a>
-                </div>
-                {% endif %}
-            </div>
+<style>
+    .management-card {
+        background: rgba(17, 17, 34, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 243, 255, 0.1);
+    }
+    
+    .student-avatar {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, var(--cyber-blue), var(--cyber-purple));
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--dark-bg);
+        font-size: 1.2rem;
+        margin-right: 1rem;
+    }
+    
+    .status-badge {
+        font-family: 'Orbitron', monospace;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.8rem;
+    }
+    
+    .btn-reset {
+        background: linear-gradient(135deg, #ff6b35, #ff8e53);
+        border: none;
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        font-family: 'Orbitron', monospace;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.8rem;
+        color: white;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-reset:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: var(--text-light);
+    }
+    
+    .empty-icon {
+        width: 100px;
+        height: 100px;
+        background: rgba(0, 243, 255, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2.5rem;
+        color: var(--cyber-blue);
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .info-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(0, 243, 255, 0.1);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--cyber-blue);
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    
+    .info-content h6 {
+        font-family: 'Orbitron', monospace;
+        color: var(--cyber-blue);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .info-content p {
+        font-family: 'Exo 2', sans-serif;
+        color: var(--text-light);
+        margin: 0;
+        font-size: 0.9rem;
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">FACE MANAGEMENT</h1>
+    <div class="page-subtitle">STUDENT BIOMETRIC REGISTRATION CONTROL</div>
+</div>
+
+<div class="card management-card">
+    <div class="card-body">
+        {% if students %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th class="cyber-text">STUDENT ID</th>
+                        <th class="cyber-text">IDENTITY</th>
+                        <th class="cyber-text">STUDENT NUMBER</th>
+                        <th class="cyber-text">FACE STATUS</th>
+                        <th class="cyber-text">REGISTRATION DATE</th>
+                        <th class="cyber-text">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td class="fw-semibold text-cyber">{{ student[0] }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="student-avatar">
+                                    <i class="fas fa-user-graduate"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold text-light">{{ student[2] }} {{ student[3] }}</div>
+                                    <small class="text-terminal">{{ student[1] }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-dark text-cyber">{{ student[1] }}</span></td>
+                        <td>
+                            {% if student[4] %}
+                            <span class="badge status-badge bg-success">
+                                <i class="fas fa-check me-1"></i>REGISTERED
+                            </span>
+                            {% else %}
+                            <span class="badge status-badge bg-warning text-dark">
+                                <i class="fas fa-times me-1"></i>PENDING
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if student[6] %}
+                            <span class="text-terminal">{{ student[6][:10] }}</span>
+                            {% else %}
+                            <span class="text-muted fst-italic">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if student[4] %}
+                            <form method="POST" action="{{ url_for('admin_reset_face', student_id=student[0]) }}" 
+                                  class="d-inline" onsubmit="return confirm('CONFIRM FACE REGISTRATION RESET FOR {{ student[2]|upper }}? THIS ACTION IS IRREVERSIBLE.');">
+                                <button type="submit" class="btn btn-reset">
+                                    <i class="fas fa-redo me-1"></i> RESET
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-muted fst-italic">NO ACTION</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <h5 class="text-cyber mb-2">NO STUDENTS FOUND</h5>
+            <p class="text-light mb-4">No students are currently registered in the system.</p>
+            <a href="{{ url_for('add_student') }}" class="btn btn-submit">
+                <i class="fas fa-plus me-2"></i> ADD FIRST STUDENT
+            </a>
+        </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- Administrator Notes -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header">
-                <h6 class="card-title mb-0 text-white">
-                    <i class="fas fa-info-circle me-2"></i>Administrator Notes
-                </h6>
+<!-- Security Information -->
+<div class="card management-card mt-4">
+    <div class="card-body">
+        <h5 class="cyber-text mb-4">
+            <i class="fas fa-shield-alt me-2"></i>SECURITY PROTOCOLS
+        </h5>
+        
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <div class="info-content">
+                    <h6>ONE-TIME REGISTRATION</h6>
+                    <p>Students can only register their face once for maximum security.</p>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-start">
-                            <i class="fas fa-lock text-success me-3 mt-1 fs-5"></i>
-                            <div>
-                                <h6 class="fw-semibold mb-1">One-Time Registration</h6>
-                                <p class="text-muted mb-0">Students can only register their face once for security reasons.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-start">
-                            <i class="fas fa-redo text-warning me-3 mt-1 fs-5"></i>
-                            <div>
-                                <h6 class="fw-semibold mb-1">Reset Function</h6>
-                                <p class="text-muted mb-0">Use "Reset Face" to allow a student to re-register if needed.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-start">
-                            <i class="fas fa-shield-alt text-primary me-3 mt-1 fs-5"></i>
-                            <div>
-                                <h6 class="fw-semibold mb-1">Data Security</h6>
-                                <p class="text-muted mb-0">Face data is encrypted and used only for attendance purposes.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-start">
-                            <i class="fas fa-exclamation-triangle text-danger me-3 mt-1 fs-5"></i>
-                            <div>
-                                <h6 class="fw-semibold mb-1">Use With Caution</h6>
-                                <p class="text-muted mb-0">Reset should only be used in exceptional circumstances.</p>
-                            </div>
-                        </div>
-                    </div>
+            
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="fas fa-redo"></i>
+                </div>
+                <div class="info-content">
+                    <h6>RESET FUNCTION</h6>
+                    <p>Administrative reset allows re-registration when necessary.</p>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div class="info-content">
+                    <h6>ENCRYPTED STORAGE</h6>
+                    <p>All biometric data is encrypted and securely stored.</p>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="info-content">
+                    <h6>CAUTION ADVISED</h6>
+                    <p>Reset operations should be used sparingly and with care.</p>
                 </div>
             </div>
         </div>

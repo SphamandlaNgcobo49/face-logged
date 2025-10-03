@@ -1,241 +1,305 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rate Lecture - Face Logged</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .sidebar {
-            background-color: #2E8B57;
-            color: white;
-            height: 100vh;
-            position: fixed;
-        }
-        .sidebar a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 15px;
-            display: block;
-            transition: background-color 0.3s;
-        }
-        .sidebar a:hover {
-            background-color: #3CB371;
-        }
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            background-color: #f8f9fa;
-        }
-        .navbar {
-            background-color: white;
-            border-bottom: 2px solid #2E8B57;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .btn-primary {
-            background-color: #2E8B57;
-            border-color: #2E8B57;
-        }
-        .btn-primary:hover {
-            background-color: #3CB371;
-            border-color: #3CB371;
-        }
-        .card {
-            border: 1px solid #2E8B57;
-            box-shadow: 0 2px 4px rgba(46, 139, 87, 0.1);
-        }
-        .card-header {
-            background-color: #2E8B57;
-            color: white;
-        }
-        .rating-stars {
-            font-size: 2rem;
-            color: #ffc107;
-            cursor: pointer;
-        }
-        .rating-stars .far {
-            color: #e4e5e9;
-        }
-    </style>
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#" style="color: #2E8B57;">
-                <i class="fas fa-camera"></i> Face Logged - Student
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ url_for('student_dashboard') }}" style="color: #2E8B57;">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
-                </a>
-                <a class="nav-link" href="{{ url_for('logout') }}" style="color: #2E8B57;">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
-            </div>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-2 sidebar">
-                <div class="p-3">
-                    <h5>Student Panel</h5>
+{% block title %}RATE LECTURES - FaceLogged Cyber System{% endblock %}
+
+{% block content %}
+<style>
+    .rating-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    .session-card {
+        background: rgba(17, 17, 34, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .session-card:hover {
+        border-color: var(--cyber-blue);
+        box-shadow: 0 8px 25px rgba(0, 243, 255, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    .session-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+    }
+    
+    .session-info {
+        flex-grow: 1;
+    }
+    
+    .session-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.3rem;
+        color: var(--cyber-blue);
+        margin-bottom: 0.5rem;
+    }
+    
+    .session-meta {
+        display: flex;
+        gap: 2rem;
+        font-family: 'Exo 2', sans-serif;
+        color: var(--text-light);
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .rating-section {
+        background: rgba(0, 243, 255, 0.05);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+    
+    .rating-stars-cyber {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .star-cyber {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin: 0 0.2rem;
+    }
+    
+    .star-cyber:hover {
+        transform: scale(1.2);
+    }
+    
+    .star-active {
+        color: #ffd700;
+    }
+    
+    .star-inactive {
+        color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .feedback-input {
+        background: rgba(0, 243, 255, 0.05);
+        border: 1px solid rgba(0, 243, 255, 0.3);
+        border-radius: 8px;
+        color: var(--text-light);
+        padding: 1rem;
+        font-family: 'Exo 2', sans-serif;
+        resize: vertical;
+        min-height: 100px;
+        transition: all 0.3s ease;
+    }
+    
+    .feedback-input:focus {
+        background: rgba(0, 243, 255, 0.1);
+        border-color: var(--cyber-blue);
+        box-shadow: 0 0 0 0.2rem rgba(0, 243, 255, 0.25);
+        color: var(--text-light);
+    }
+    
+    .btn-submit-rating {
+        background: linear-gradient(135deg, var(--cyber-blue), var(--cyber-purple));
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-family: 'Orbitron', monospace;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--dark-bg);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-submit-rating:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 243, 255, 0.4);
+        color: var(--dark-bg);
+    }
+    
+    .empty-state-rating {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+    
+    .empty-icon-rating {
+        width: 120px;
+        height: 120px;
+        background: rgba(0, 243, 255, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        font-size: 3rem;
+        color: var(--cyber-blue);
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">RATE LECTURES</h1>
+    <div class="page-subtitle">PROVIDE FEEDBACK ON YOUR LEARNING EXPERIENCE</div>
+</div>
+
+<div class="rating-container">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'warning' %}exclamation-triangle{% elif category == 'danger' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" style="filter: invert(1);"></button>
                 </div>
-                <ul class="nav flex-column">
-                    <li><a href="{{ url_for('student_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                    <li><a href="{{ url_for('student_attendance') }}"><i class="fas fa-calendar-check"></i> My Attendance</a></li>
-                    <li><a href="{{ url_for('rate_lecture') }}"><i class="fas fa-star"></i> Rate Lectures</a></li>
-                    <li><a href="{{ url_for('register_face') }}"><i class="fas fa-id-card"></i> Register Face</a></li>
-                </ul>
-            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
-            <!-- Main Content -->
-            <div class="col-md-10 main-content">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 style="color: #2E8B57;"><i class="fas fa-star"></i> Rate Your Lectures</h2>
-                </div>
-
-                <!-- Flash Messages -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    {% if sessions_to_rate %}
+    <div class="ratings-card">
+        <div class="card-body">
+            <h4 class="cyber-text mb-4">
+                <i class="fas fa-list me-2"></i>LECTURES AWAITING FEEDBACK
+            </h4>
+            <p class="text-light mb-4">Please provide your feedback for the following lectures you have attended:</p>
+            
+            {% for session in sessions_to_rate %}
+            <div class="session-card">
+                <div class="session-header">
+                    <div class="session-info">
+                        <div class="session-title">{{ session[1] }} - {{ session[2] }}</div>
+                        <div class="session-meta">
+                            <div class="meta-item">
+                                <i class="fas fa-calendar text-cyber"></i>
+                                <span>{{ session[3] }} {% if session[5] %}at {{ session[5] }}{% endif %}</span>
                             </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-
-                {% if sessions_to_rate %}
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0"><i class="fas fa-list"></i> Lectures Available for Rating</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted">Please rate the following lectures you have attended:</p>
-                        
-                        {% for session in sessions_to_rate %}
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <form method="POST" action="{{ url_for('rate_lecture') }}">
-                                    <input type="hidden" name="session_id" value="{{ session[0] }}">
-                                    
-                                    <div class="row">
-                                        <div class="col-md-8">
-                                            <h6>{{ session[1] }} - {{ session[2] }}</h6>
-                                            <p class="mb-1"><strong>Date:</strong> {{ session[3] }} {% if session[5] %}at {{ session[5] }}{% endif %}</p>
-                                            <p class="mb-2"><strong>Topic:</strong> {{ session[4] or 'General Lecture' }}</p>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="mb-3">
-                                                <label class="form-label"><strong>Rating:</strong></label>
-                                                <div class="rating-stars mb-2">
-                                                    {% for i in range(1, 6) %}
-                                                    <span class="star" data-rating="{{ i }}">
-                                                        <i class="far fa-star"></i>
-                                                    </span>
-                                                    {% endfor %}
-                                                </div>
-                                                <input type="hidden" name="rating" id="rating_{{ session[0] }}" required>
-                                                <div class="form-text">Click stars to rate (1-5)</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="feedback_{{ session[0] }}" class="form-label">Feedback (optional):</label>
-                                        <textarea class="form-control" id="feedback_{{ session[0] }}" name="feedback" rows="2" placeholder="Any additional feedback about this lecture..."></textarea>
-                                    </div>
-                                    
-                                    <button type="submit" class="btn btn-primary btn-sm">
-                                        <i class="fas fa-paper-plane"></i> Submit Rating
-                                    </button>
-                                </form>
+                            <div class="meta-item">
+                                <i class="fas fa-book text-cyber"></i>
+                                <span>{{ session[4] or 'General Lecture' }}</span>
                             </div>
                         </div>
-                        {% endfor %}
                     </div>
                 </div>
-                {% else %}
-                <div class="card">
-                    <div class="card-body text-center py-5">
-                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-                        <h4>All Caught Up!</h4>
-                        <p class="text-muted">You have rated all available lectures. Check back after your next classes.</p>
-                        <a href="{{ url_for('student_dashboard') }}" class="btn btn-primary">
-                            <i class="fas fa-arrow-left"></i> Back to Dashboard
-                        </a>
+                
+                <form method="POST" action="{{ url_for('rate_lecture') }}">
+                    <input type="hidden" name="session_id" value="{{ session[0] }}">
+                    
+                    <div class="rating-section">
+                        <div class="mb-3">
+                            <label class="form-label-cyber mb-3">LECTURE RATING</label>
+                            <div class="rating-stars-cyber mb-3">
+                                {% for i in range(1, 6) %}
+                                <span class="star-cyber star-inactive" data-rating="{{ i }}" onclick="setRating(this, {{ session[0] }})">
+                                    <i class="fas fa-star"></i>
+                                </span>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" name="rating" id="rating_{{ session[0] }}" required>
+                            <div class="form-text text-terminal">Click stars to rate (1-5 stars)</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="feedback_{{ session[0] }}" class="form-label-cyber">ADDITIONAL FEEDBACK</label>
+                            <textarea class="feedback-input" id="feedback_{{ session[0] }}" name="feedback" rows="3" placeholder="Share your thoughts about this lecture... (optional)"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-submit-rating">
+                            <i class="fas fa-paper-plane me-2"></i> SUBMIT RATING
+                        </button>
                     </div>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="ratings-card">
+        <div class="card-body text-center">
+            <div class="empty-state-rating">
+                <div class="empty-icon-rating">
+                    <i class="fas fa-check-circle"></i>
                 </div>
-                {% endif %}
+                <h3 class="text-cyber mb-3">ALL CAUGHT UP!</h3>
+                <p class="text-light mb-4">You have rated all available lectures. Check back after your next classes.</p>
+                <a href="{{ url_for('student_dashboard') }}" class="btn btn-submit">
+                    <i class="fas fa-arrow-left me-2"></i> BACK TO DASHBOARD
+                </a>
             </div>
         </div>
     </div>
+    {% endif %}
+</div>
 
-    <script>
-        // Star rating functionality
-        document.querySelectorAll('.rating-stars').forEach(starsContainer => {
-            const stars = starsContainer.querySelectorAll('.star');
-            const hiddenInput = starsContainer.parentElement.querySelector('input[type="hidden"]');
-            
-            stars.forEach(star => {
-                star.addEventListener('click', () => {
-                    const rating = parseInt(star.getAttribute('data-rating'));
-                    hiddenInput.value = rating;
-                    
-                    // Update star display
-                    stars.forEach((s, index) => {
-                        const starIcon = s.querySelector('i');
-                        if (index < rating) {
-                            starIcon.className = 'fas fa-star';
-                        } else {
-                            starIcon.className = 'far fa-star';
-                        }
-                    });
-                });
-                
-                star.addEventListener('mouseover', () => {
-                    const rating = parseInt(star.getAttribute('data-rating'));
-                    stars.forEach((s, index) => {
-                        const starIcon = s.querySelector('i');
-                        if (index < rating) {
-                            starIcon.style.color = '#ffc107';
-                        } else {
-                            starIcon.style.color = '#e4e5e9';
-                        }
-                    });
-                });
-                
-                star.addEventListener('mouseout', () => {
-                    const currentRating = parseInt(hiddenInput.value) || 0;
-                    stars.forEach((s, index) => {
-                        const starIcon = s.querySelector('i');
-                        if (index < currentRating) {
-                            starIcon.style.color = '#ffc107';
-                        } else {
-                            starIcon.style.color = '#e4e5e9';
-                        }
-                    });
-                });
-            });
+<script>
+function setRating(starElement, sessionId) {
+    const rating = parseInt(starElement.getAttribute('data-rating'));
+    const hiddenInput = document.getElementById('rating_' + sessionId);
+    const stars = starElement.parentElement.querySelectorAll('.star-cyber');
+    
+    // Update hidden input
+    hiddenInput.value = rating;
+    
+    // Update star display
+    stars.forEach((star, index) => {
+        const starIndex = parseInt(star.getAttribute('data-rating'));
+        if (starIndex <= rating) {
+            star.classList.remove('star-inactive');
+            star.classList.add('star-active');
+        } else {
+            star.classList.remove('star-active');
+            star.classList.add('star-inactive');
+        }
+    });
+}
+
+// Form validation
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        const ratingInput = this.querySelector('input[name="rating"]');
+        if (!ratingInput.value) {
+            e.preventDefault();
+            alert('Please select a rating before submitting.');
+        }
+    });
+});
+
+// Add hover effects to stars
+document.querySelectorAll('.star-cyber').forEach(star => {
+    star.addEventListener('mouseover', function() {
+        const rating = parseInt(this.getAttribute('data-rating'));
+        const stars = this.parentElement.querySelectorAll('.star-cyber');
+        
+        stars.forEach((s, index) => {
+            const starRating = parseInt(s.getAttribute('data-rating'));
+            if (starRating <= rating) {
+                s.style.color = '#ffd700';
+                s.style.transform = 'scale(1.1)';
+            }
         });
-
-        // Form validation
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                const ratingInput = this.querySelector('input[name="rating"]');
-                if (!ratingInput.value) {
-                    e.preventDefault();
-                    alert('Please select a rating before submitting.');
-                }
-            });
+    });
+    
+    star.addEventListener('mouseout', function() {
+        const hiddenInput = this.parentElement.parentElement.querySelector('input[type="hidden"]');
+        const currentRating = parseInt(hiddenInput.value) || 0;
+        const stars = this.parentElement.querySelectorAll('.star-cyber');
+        
+        stars.forEach((s, index) => {
+            const starRating = parseInt(s.getAttribute('data-rating'));
+            s.style.transform = 'scale(1)';
+            if (!currentRating || starRating > currentRating) {
+                s.style.color = '';
+            }
         });
-    </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    });
+});
+</script>
+{% endblock %}
