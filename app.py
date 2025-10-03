@@ -15,11 +15,17 @@ import cv2
 import numpy as np
 import threading
 import random
+import re
+import pyttsx3
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey123"
 app.config['UPLOAD_FOLDER'] = 'static/face_data'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
+# Initialize text-to-speech engine
+tts_engine = pyttsx3.init()
+tts_engine.setProperty('rate', 150)
 
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -28,6 +34,18 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # Hardcoded Admin
 # ---------------------------
 ADMIN_USER = {"username": "admin", "password": "password123"}
+
+# Department options
+DEPARTMENTS = [
+    "Computer Science",
+    "Information Technology",
+    "Software Engineering",
+    "Data Science",
+    "Cybersecurity",
+    "Computer Engineering",
+    "Information Systems",
+    "Artificial Intelligence"
+]
 
 # Global variables for face registration and continuous attendance
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -38,6 +56,55 @@ face_recognizer = cv2.face.LBPHFaceRecognizer_create()
 face_labels = {}  # Maps label IDs to student IDs
 label_counter = 0
 trained_model = False
+
+# Track voice announcements to avoid spamming
+last_voice_announcement = {}
+
+# ---------------------------
+# Validation Functions
+# ---------------------------
+def validate_phone(phone):
+    """Validate phone number to be exactly 10 digits"""
+    if not phone:
+        return False
+    # Remove any spaces, dashes, or parentheses
+    clean_phone = re.sub(r'[\s\-\(\)]', '', phone)
+    return len(clean_phone) == 10 and clean_phone.isdigit()
+
+def validate_student_number(student_number):
+    """Validate student number to be exactly 6 digits"""
+    if not student_number:
+        return False
+    return len(student_number) == 6 and student_number.isdigit()
+
+def validate_semester(semester):
+    """Validate semester to be only 1 or 2"""
+    return semester in ['1', '2']
+
+def validate_name(name):
+    """Validate name to be max 50 characters"""
+    return len(name) <= 50 if name else False
+
+def validate_department(department):
+    """Validate department is from the predefined list"""
+    return department in DEPARTMENTS
+
+# ---------------------------
+# Text-to-Speech Function
+# ---------------------------
+def speak_text(text):
+    """Speak text using text-to-speech"""
+    def speak():
+        try:
+            tts_engine.say(text)
+            tts_engine.runAndWait()
+        except Exception as e:
+            print(f"Text-to-speech error: {e}")
+    
+    # Run in a separate thread to avoid blocking
+    thread = threading.Thread(target=speak)
+    thread.daemon = True
+    thread.start()
 
 # ---------------------------
 # Database Setup & Migration
@@ -175,6 +242,7 @@ def init_db():
             Start_Time TEXT,
             End_Time TEXT,
             Topic TEXT,
+            Session_Number INTEGER,
             Session_Status TEXT DEFAULT 'scheduled',
             Date_Created TEXT DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (Module_ID) REFERENCES Modules(Module_ID)
@@ -242,7 +310,7 @@ init_db()
 SENDER_EMAIL = "mpilozikhali72@gmail.com"
 SENDER_PASSWORD = "etvn fogt ndvv lcse"
 
-def send_email(receiver_email, subject, message_text):
+def send_email(receiver_email, subject, message_text, message_html=None):
     try:
         message = MIMEMultipart("alternative")
         message["Subject"] = subject
@@ -252,6 +320,10 @@ def send_email(receiver_email, subject, message_text):
         # Create both plain and HTML versions
         part1 = MIMEText(message_text, "plain")
         message.attach(part1)
+        
+        if message_html:
+            part2 = MIMEText(message_html, "html")
+            message.attach(part2)
 
         # Try multiple email servers
         servers = [
@@ -290,7 +362,7 @@ def send_email(receiver_email, subject, message_text):
 
 def send_login_email(receiver_email, username, password):
     subject = "Your Face Logged Account Details"
-    message = f"""
+    message_text = f"""
 Hello,
 
 Your account has been created.
@@ -303,7 +375,81 @@ Please log in and change your password after first login.
 Regards,
 Face Logged Admin
 """
-    return send_email(receiver_email, subject, message)
+    
+    message_html = f"""
+<html>
+<body>
+<h3>Welcome to Face Logged System!</h3>
+<p>Your account has been created successfully.</p>
+<p><strong>Username:</strong> {username}</p>
+<p><strong>Password:</strong> {password}</p>
+<p>Please log in and change your password after first login.</p>
+<br>
+<p>Regards,<br>Face Logged Admin</p>
+</body>
+</html>
+"""
+    return send_email(receiver_email, subject, message_text, message_html)
+
+def send_attendance_alert_email(receiver_email, student_name, module_name, attendance_percentage, threshold):
+    subject = f"Low Attendance Alert - {module_name}"
+    message_text = f"""
+Dear {student_name},
+
+Your attendance for {module_name} is currently {attendance_percentage}%, 
+which is below the required threshold of {threshold}%.
+
+Please ensure you attend future lectures to maintain satisfactory attendance.
+
+Regards,
+University Administration
+"""
+    
+    message_html = f"""
+<html>
+<body>
+<h3>Low Attendance Alert</h3>
+<p>Dear {student_name},</p>
+<p>Your attendance for <strong>{module_name}</strong> is currently <strong>{attendance_percentage}%</strong>, 
+which is below the required threshold of <strong>{threshold}%</strong>.</p>
+<p>Please ensure you attend future lectures to maintain satisfactory attendance.</p>
+<br>
+<p>Regards,<br>University Administration</p>
+</body>
+</html>
+"""
+    return send_email(receiver_email, subject, message_text, message_html)
+
+def send_password_reset_email(receiver_email, username, new_password):
+    subject = "Password Reset - Face Logged System"
+    message_text = f"""
+Hello,
+
+Your password has been reset.
+
+Username: {username}
+New Password: {new_password}
+
+Please log in and change your password immediately.
+
+Regards,
+Face Logged Admin
+"""
+    
+    message_html = f"""
+<html>
+<body>
+<h3>Password Reset</h3>
+<p>Your password has been reset successfully.</p>
+<p><strong>Username:</strong> {username}</p>
+<p><strong>New Password:</strong> {new_password}</p>
+<p>Please log in and change your password immediately.</p>
+<br>
+<p>Regards,<br>Face Logged Admin</p>
+</body>
+</html>
+"""
+    return send_email(receiver_email, subject, message_text, message_html)
 
 # ---------------------------
 # Enhanced Face Recognition Functions
@@ -316,24 +462,44 @@ class AttendanceSession:
         self.detected_students = set()
         self.session_id = None
         self.start_time = None
+        self.session_number = None
         
     def start_session(self):
+        # Check if maximum sessions reached
+        conn = sqlite3.connect("face_logged.db")
+        c = conn.cursor()
+        
+        # Get total allowed sessions for this module
+        c.execute("SELECT Number_of_Classes FROM Modules WHERE Module_ID = ?", (self.module_id,))
+        result = c.fetchone()
+        max_sessions = result[0] if result else 0
+        
+        # Count existing sessions
+        c.execute("SELECT COUNT(*) FROM LectureSessions WHERE Module_ID = ?", (self.module_id,))
+        existing_sessions = c.fetchone()[0]
+        
+        if existing_sessions >= max_sessions:
+            conn.close()
+            return False, f"Cannot start new session. Maximum of {max_sessions} sessions already reached for this module."
+        
+        # Get next session number
+        self.session_number = existing_sessions + 1
+        
         self.is_active = True
         self.start_time = datetime.now()
         self.detected_students.clear()
         
         # Create a new lecture session in database
-        conn = sqlite3.connect("face_logged.db")
-        c = conn.cursor()
         c.execute("""
-            INSERT INTO LectureSessions (Module_ID, Session_Date, Start_Time, Topic, Session_Status)
-            VALUES (?, ?, ?, ?, 'active')
+            INSERT INTO LectureSessions (Module_ID, Session_Date, Start_Time, Topic, Session_Number, Session_Status)
+            VALUES (?, ?, ?, ?, ?, 'active')
         """, (self.module_id, self.start_time.strftime("%Y-%m-%d"), 
-              self.start_time.strftime("%H:%M:%S"), "Auto-detected Session"))
+              self.start_time.strftime("%H:%M:%S"), "Auto-detected Session", self.session_number))
         self.session_id = c.lastrowid
         conn.commit()
         conn.close()
         print(f"✅ Attendance session started: {self.session_id}")
+        return True, f"Session {self.session_number} started successfully"
         
     def stop_session(self):
         self.is_active = False
@@ -426,13 +592,15 @@ def recognize_face_in_frame(frame):
             if confidence < 80:  # Confidence threshold (adjust as needed)
                 student_id = face_labels.get(label)
                 if student_id:
+                    student_name = get_student_name(student_id)
                     recognized_students.append({
                         'student_id': student_id,
-                        'name': get_student_name(student_id),
+                        'name': student_name,
                         'confidence': confidence,
                         'location': (x, y, w, h)
                     })
-                    print(f"✅ Recognized: {get_student_name(student_id)} (confidence: {confidence:.2f})")
+                    print(f"✅ Recognized: {student_name} (confidence: {confidence:.2f})")
+                    
             else:
                 print(f"❌ Unknown face (confidence: {confidence:.2f})")
         
@@ -544,6 +712,15 @@ def generate_frames_with_continuous_recognition(module_id, lecturer_id):
             cv2.putText(frame, status_text, (x, y-10), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
             
+            # VOICE FEEDBACK FOR EVERY STUDENT RECOGNIZED
+            # Check if we haven't announced this student recently (avoid spamming)
+            if (student_id not in last_voice_announcement or 
+                current_time - last_voice_announcement.get(student_id, 0) > 15):  # 15 seconds cooldown
+                
+                speak_text(f"{student_name} present")
+                last_voice_announcement[student_id] = current_time
+                print(f"🔊 Voice announcement: {student_name} present")
+            
             # Mark attendance if session is active and not recently detected
             if (attendance_session.is_active and student_id not in attendance_session.detected_students and 
                 (student_id not in last_detection_time or 
@@ -574,7 +751,7 @@ def generate_frames_with_continuous_recognition(module_id, lecturer_id):
                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
         
         # Add session status to frame
-        status_text = "ACTIVE - Recording Attendance" if attendance_session.is_active else "READY - Press Start"
+        status_text = f"ACTIVE - Session {attendance_session.session_number}" if attendance_session.is_active else "READY - Press Start"
         status_color = (0, 255, 0) if attendance_session.is_active else (0, 0, 255)
         cv2.putText(frame, status_text, (10, 30), 
                    cv2.FONT_HERSHEY_SIMPLEX, 1, status_color, 2)
@@ -616,7 +793,7 @@ def get_student_name(student_id):
     return f"Student {student_id}"
 
 def mark_attendance_automatically(student_id, module_id, session_id):
-    """Mark attendance for a recognized student"""
+    """Mark attendance for a recognized student with voice feedback"""
     try:
         conn = sqlite3.connect("face_logged.db")
         c = conn.cursor()
@@ -634,8 +811,20 @@ def mark_attendance_automatically(student_id, module_id, session_id):
                 VALUES (?, ?, ?, ?, ?, 'Present')
             """, (student_id, module_id, session_id, today, current_time))
             
+            # Get student name for voice feedback
+            c.execute("SELECT First_Name, Last_Name FROM Students WHERE Student_ID = ?", (student_id,))
+            student_info = c.fetchone()
+            
             conn.commit()
             conn.close()
+            
+            # Voice feedback for attendance marking
+            if student_info:
+                student_name = f"{student_info[0]} {student_info[1]}"
+                attendance_message = f"Attendance marked for {student_name}"
+                speak_text(attendance_message)
+                print(f"🔊 {attendance_message}")
+            
             return True
     
     except Exception as e:
@@ -760,12 +949,6 @@ def validate_email(email):
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
-def validate_phone(phone):
-    """Basic phone number validation"""
-    import re
-    pattern = r'^\+?[\d\s\-\(\)]{10,}$'
-    return re.match(pattern, phone) is not None
-
 def get_modules_for_student(student_id):
     conn = sqlite3.connect("face_logged.db")
     c = conn.cursor()
@@ -798,19 +981,8 @@ def check_attendance_thresholds():
         attendance_percentage = get_student_attendance_percentage(student_id, module_id)
         
         if attendance_percentage < threshold:
-            subject = f"Low Attendance Alert - {module_name}"
-            message = f"""
-Dear {first_name},
-
-Your attendance for {module_name} is currently {attendance_percentage}%, which is below the required threshold of {threshold}%.
-
-Please ensure you attend future lectures to maintain satisfactory attendance.
-
-Regards,
-University Administration
-"""
-            if send_email(email, subject, message):
-                print(f"✅ Low attendance alert sent to {email}")
+            send_attendance_alert_email(email, first_name, module_name, attendance_percentage, threshold)
+            print(f"⚠️ Low attendance alert sent to {email}")
     
     conn.close()
 
@@ -840,24 +1012,30 @@ def check_module_attendance_thresholds(module_id):
         attendance_percentage = get_student_attendance_percentage(student_id, module_id)
         
         if attendance_percentage < threshold:
-            subject = f"Low Attendance Alert - {module_name}"
-            message = f"""
-Dear {first_name},
-
-Your attendance for {module_name} is currently {attendance_percentage}%, 
-which is below the required threshold of {threshold}%.
-
-Please ensure you attend future lectures to maintain satisfactory attendance.
-
-Regards,
-University Administration
-"""
-            if send_email(email, subject, message):
+            if send_attendance_alert_email(email, first_name, module_name, attendance_percentage, threshold):
                 alerts_sent += 1
                 print(f"⚠️ Low attendance alert sent to {email}")
     
     conn.close()
     return alerts_sent
+
+def can_start_new_session(module_id):
+    """Check if a new session can be started for the module"""
+    conn = sqlite3.connect("face_logged.db")
+    c = conn.cursor()
+    
+    # Get total allowed sessions for this module
+    c.execute("SELECT Number_of_Classes FROM Modules WHERE Module_ID = ?", (module_id,))
+    result = c.fetchone()
+    max_sessions = result[0] if result else 0
+    
+    # Count existing sessions
+    c.execute("SELECT COUNT(*) FROM LectureSessions WHERE Module_ID = ?", (module_id,))
+    existing_sessions = c.fetchone()[0]
+    
+    conn.close()
+    
+    return existing_sessions < max_sessions
 
 # ---------------------------
 # Routes - Authentication & Core
@@ -917,6 +1095,68 @@ def login():
 
     return render_template("login.html")
 
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email")
+        
+        if not email:
+            flash("Please enter your email address", "danger")
+            return render_template("forgot_password.html")
+        
+        # Check if email exists in students
+        conn = sqlite3.connect("face_logged.db")
+        c = conn.cursor()
+        c.execute("SELECT Student_ID, Student_Number FROM Students WHERE Email = ?", (email,))
+        student = c.fetchone()
+        
+        if student:
+            student_id, username = student
+            # Generate new password
+            alphabet = string.ascii_letters + string.digits
+            new_password = ''.join(secrets.choice(alphabet) for i in range(10))
+            
+            # Update password in database
+            c.execute("UPDATE Students SET Password = ? WHERE Student_ID = ?", (new_password, student_id))
+            conn.commit()
+            conn.close()
+            
+            # Send password reset email
+            if send_password_reset_email(email, username, new_password):
+                flash("Password reset successfully! Check your email for the new password.", "success")
+            else:
+                flash("Password reset but email could not be sent. Please contact administrator.", "warning")
+            return redirect(url_for("login"))
+        
+        # Check if email exists in lecturers
+        c.execute("SELECT Lecturer_ID, Username FROM Lecturers WHERE Email = ?", (email,))
+        lecturer = c.fetchone()
+        conn.close()
+        
+        if lecturer:
+            lecturer_id, username = lecturer
+            # Generate new password
+            alphabet = string.ascii_letters + string.digits
+            new_password = ''.join(secrets.choice(alphabet) for i in range(10))
+            
+            # Update password in database
+            conn = sqlite3.connect("face_logged.db")
+            c = conn.cursor()
+            c.execute("UPDATE Lecturers SET Password = ? WHERE Lecturer_ID = ?", (new_password, lecturer_id))
+            conn.commit()
+            conn.close()
+            
+            # Send password reset email
+            if send_password_reset_email(email, username, new_password):
+                flash("Password reset successfully! Check your email for the new password.", "success")
+            else:
+                flash("Password reset but email could not be sent. Please contact administrator.", "warning")
+            return redirect(url_for("login"))
+        
+        flash("Email address not found in our system", "danger")
+    
+    return render_template("forgot_password.html")
+
 @app.route("/logout")
 def logout():
     session.clear()
@@ -975,7 +1215,7 @@ def lecturers():
     c.execute("SELECT * FROM Lecturers")
     lecturers_list = c.fetchall()
     conn.close()
-    return render_template("lecturers.html", lecturers=lecturers_list)
+    return render_template("lecturers.html", lecturers=lecturers_list, departments=DEPARTMENTS)
 
 @app.route("/add-lecturer", methods=["GET", "POST"])
 def add_lecturer():
@@ -992,11 +1232,24 @@ def add_lecturer():
 
         if not all([first_name, last_name, email, department, username]):
             flash("Please fill in all required fields", "danger")
-            return render_template("add_lecturer.html")
+            return render_template("add_lecturer.html", departments=DEPARTMENTS)
         
+        # Validate inputs
         if not validate_email(email):
             flash("Please enter a valid email address", "danger")
-            return render_template("add_lecturer.html")
+            return render_template("add_lecturer.html", departments=DEPARTMENTS)
+        
+        if not validate_name(first_name) or not validate_name(last_name):
+            flash("First name and last name must be 50 characters or less", "danger")
+            return render_template("add_lecturer.html", departments=DEPARTMENTS)
+        
+        if phone and not validate_phone(phone):
+            flash("Phone number must be exactly 10 digits", "danger")
+            return render_template("add_lecturer.html", departments=DEPARTMENTS)
+        
+        if not validate_department(department):
+            flash("Please select a valid department", "danger")
+            return render_template("add_lecturer.html", departments=DEPARTMENTS)
 
         alphabet = string.ascii_letters + string.digits
         password = ''.join(secrets.choice(alphabet) for i in range(10))
@@ -1019,9 +1272,9 @@ def add_lecturer():
         
         except sqlite3.IntegrityError:
             flash("Username or email already exists", "danger")
-            return render_template("add_lecturer.html")
+            return render_template("add_lecturer.html", departments=DEPARTMENTS)
 
-    return render_template("add_lecturer.html")
+    return render_template("add_lecturer.html", departments=DEPARTMENTS)
 
 @app.route("/edit-lecturer/<int:lecturer_id>", methods=["GET", "POST"])
 def edit_lecturer(lecturer_id):
@@ -1039,6 +1292,19 @@ def edit_lecturer(lecturer_id):
         department = request.form.get("department")
         username = request.form.get("username")
         password = request.form.get("password")
+
+        # Validate inputs
+        if not validate_name(first_name) or not validate_name(last_name):
+            flash("First name and last name must be 50 characters or less", "danger")
+            return redirect(url_for("edit_lecturer", lecturer_id=lecturer_id))
+        
+        if phone and not validate_phone(phone):
+            flash("Phone number must be exactly 10 digits", "danger")
+            return redirect(url_for("edit_lecturer", lecturer_id=lecturer_id))
+        
+        if not validate_department(department):
+            flash("Please select a valid department", "danger")
+            return redirect(url_for("edit_lecturer", lecturer_id=lecturer_id))
 
         try:
             if password:
@@ -1064,7 +1330,7 @@ def edit_lecturer(lecturer_id):
     lecturer = c.fetchone()
     conn.close()
     
-    return render_template("edit_lecturer.html", lecturer=lecturer)
+    return render_template("edit_lecturer.html", lecturer=lecturer, departments=DEPARTMENTS)
 
 @app.route("/delete-lecturer/<int:lecturer_id>", methods=["POST"])
 def delete_lecturer(lecturer_id):
@@ -1103,7 +1369,20 @@ def add_module():
 
         if not all([module_code, module_name, credits, semester, department, lecturer_id, number_of_classes]):
             flash("Please fill in all required fields", "danger")
-            return render_template("add_module.html", lecturers=lecturers)
+            return render_template("add_module.html", lecturers=lecturers, departments=DEPARTMENTS)
+
+        # REMOVED MODULE CODE VALIDATION - Keep other validations
+        if not validate_name(module_name):
+            flash("Module name must be 50 characters or less", "danger")
+            return render_template("add_module.html", lecturers=lecturers, departments=DEPARTMENTS)
+        
+        if not validate_semester(semester):
+            flash("Semester must be either 1 or 2", "danger")
+            return render_template("add_module.html", lecturers=lecturers, departments=DEPARTMENTS)
+        
+        if not validate_department(department):
+            flash("Please select a valid department", "danger")
+            return render_template("add_module.html", lecturers=lecturers, departments=DEPARTMENTS)
 
         try:
             conn = sqlite3.connect("face_logged.db")
@@ -1120,9 +1399,9 @@ def add_module():
         
         except sqlite3.IntegrityError:
             flash("Module code already exists", "danger")
-            return render_template("add_module.html", lecturers=lecturers)
+            return render_template("add_module.html", lecturers=lecturers, departments=DEPARTMENTS)
 
-    return render_template("add_module.html", lecturers=lecturers)
+    return render_template("add_module.html", lecturers=lecturers, departments=DEPARTMENTS)
 
 @app.route("/edit-module/<int:module_id>", methods=["GET", "POST"])
 def edit_module(module_id):
@@ -1146,6 +1425,19 @@ def edit_module(module_id):
         number_of_classes = request.form.get("number_of_classes")
         attendance_threshold = request.form.get("attendance_threshold", 75)
 
+        # REMOVED MODULE CODE VALIDATION - Keep other validations
+        if not validate_name(module_name):
+            flash("Module name must be 50 characters or less", "danger")
+            return redirect(url_for("edit_module", module_id=module_id))
+        
+        if not validate_semester(semester):
+            flash("Semester must be either 1 or 2", "danger")
+            return redirect(url_for("edit_module", module_id=module_id))
+        
+        if not validate_department(department):
+            flash("Please select a valid department", "danger")
+            return redirect(url_for("edit_module", module_id=module_id))
+
         try:
             c.execute("""
                 UPDATE Modules 
@@ -1164,7 +1456,7 @@ def edit_module(module_id):
     module = c.fetchone()
     conn.close()
     
-    return render_template("edit_module.html", module=module, lecturers=lecturers)
+    return render_template("edit_module.html", module=module, lecturers=lecturers, departments=DEPARTMENTS)
 
 @app.route("/delete-module/<int:module_id>", methods=["POST"])
 def delete_module(module_id):
@@ -1239,8 +1531,17 @@ def add_student():
             flash("Please fill in all required fields", "danger")
             return render_template("add_student.html", modules=modules)
         
+        # Validate inputs
         if not validate_email(email):
             flash("Please enter a valid email address", "danger")
+            return render_template("add_student.html", modules=modules)
+        
+        if not validate_student_number(student_number):
+            flash("Student number must be exactly 6 digits", "danger")
+            return render_template("add_student.html", modules=modules)
+        
+        if not validate_name(first_name) or not validate_name(last_name):
+            flash("First name and last name must be 50 characters or less", "danger")
             return render_template("add_student.html", modules=modules)
 
         try:
@@ -1298,6 +1599,15 @@ def edit_student(student_id):
         email = request.form.get("email")
         password = request.form.get("password")
         selected_modules = request.form.getlist("modules")
+
+        # Validate inputs
+        if not validate_student_number(student_number):
+            flash("Student number must be exactly 6 digits", "danger")
+            return redirect(url_for("edit_student", student_id=student_id))
+        
+        if not validate_name(first_name) or not validate_name(last_name):
+            flash("First name and last name must be 50 characters or less", "danger")
+            return redirect(url_for("edit_student", student_id=student_id))
 
         try:
             # Update student basic info
@@ -1475,9 +1785,10 @@ def student_dashboard():
     
     # Get recent attendance
     c.execute("""
-        SELECT a.Attendance_Date, m.Module_Code, m.Module_Name, a.Status
+        SELECT a.Attendance_Date, m.Module_Code, m.Module_Name, a.Status, ls.Session_Number
         FROM Attendance a
         JOIN Modules m ON a.Module_ID = m.Module_ID
+        LEFT JOIN LectureSessions ls ON a.Session_ID = ls.Session_ID
         WHERE a.Student_ID = ?
         ORDER BY a.Attendance_Date DESC, a.Attendance_Time DESC
         LIMIT 10
@@ -1515,7 +1826,7 @@ def student_attendance():
     modules = c.fetchall()
     
     query = """
-        SELECT a.Attendance_Date, a.Attendance_Time, m.Module_Code, m.Module_Name, a.Status, ls.Topic
+        SELECT a.Attendance_Date, a.Attendance_Time, m.Module_Code, m.Module_Name, a.Status, ls.Topic, ls.Session_Number
         FROM Attendance a
         JOIN Modules m ON a.Module_ID = m.Module_ID
         LEFT JOIN LectureSessions ls ON a.Session_ID = ls.Session_ID
@@ -1655,7 +1966,7 @@ def rate_lecture():
     # GET request - show sessions available for rating
     c.execute("""
         SELECT DISTINCT ls.Session_ID, m.Module_Code, m.Module_Name, 
-               ls.Session_Date, ls.Topic, ls.Start_Time
+               ls.Session_Date, ls.Topic, ls.Start_Time, ls.Session_Number
         FROM Attendance a
         JOIN LectureSessions ls ON a.Session_ID = ls.Session_ID
         JOIN Modules m ON ls.Module_ID = m.Module_ID
@@ -1696,7 +2007,7 @@ def lecturer_dashboard():
     
     c.execute("""
         SELECT ls.Session_ID, m.Module_Code, ls.Session_Date, ls.Topic,
-               COUNT(a.Student_ID) as attendance_count
+               COUNT(a.Student_ID) as attendance_count, ls.Session_Number
         FROM LectureSessions ls
         JOIN Modules m ON ls.Module_ID = m.Module_ID
         LEFT JOIN Attendance a ON ls.Session_ID = a.Session_ID AND a.Status = 'Present'
@@ -1718,6 +2029,17 @@ def lecturer_dashboard():
 def take_attendance(module_id):
     if not session.get("logged_in") or session.get("role") != "lecturer":
         return redirect(url_for("login"))
+    
+    # Check if new session can be started
+    if not can_start_new_session(module_id):
+        conn = sqlite3.connect("face_logged.db")
+        c = conn.cursor()
+        c.execute("SELECT Module_Code, Module_Name, Number_of_Classes FROM Modules WHERE Module_ID = ?", (module_id,))
+        module_info = c.fetchone()
+        conn.close()
+        
+        flash(f"Cannot start new session. Maximum of {module_info[2]} sessions already reached for {module_info[1]}.", "danger")
+        return redirect(url_for("lecturer_dashboard"))
     
     conn = sqlite3.connect("face_logged.db")
     c = conn.cursor()
@@ -1742,6 +2064,17 @@ def take_attendance(module_id):
 def take_attendance_enhanced(module_id):
     if not session.get("logged_in") or session.get("role") != "lecturer":
         return redirect(url_for("login"))
+    
+    # Check if new session can be started
+    if not can_start_new_session(module_id):
+        conn = sqlite3.connect("face_logged.db")
+        c = conn.cursor()
+        c.execute("SELECT Module_Code, Module_Name, Number_of_Classes FROM Modules WHERE Module_ID = ?", (module_id,))
+        module_info = c.fetchone()
+        conn.close()
+        
+        flash(f"Cannot start new session. Maximum of {module_info[2]} sessions already reached for {module_info[1]}.", "danger")
+        return redirect(url_for("lecturer_dashboard"))
     
     conn = sqlite3.connect("face_logged.db")
     c = conn.cursor()
@@ -1785,13 +2118,23 @@ def start_attendance(module_id):
     if not session.get("logged_in") or session.get("role") != "lecturer":
         return jsonify({"success": False, "message": "Unauthorized"})
     
+    # Check if new session can be started
+    if not can_start_new_session(module_id):
+        conn = sqlite3.connect("face_logged.db")
+        c = conn.cursor()
+        c.execute("SELECT Module_Code, Module_Name, Number_of_Classes FROM Modules WHERE Module_ID = ?", (module_id,))
+        module_info = c.fetchone()
+        conn.close()
+        
+        return jsonify({"success": False, "message": f"Cannot start new session. Maximum of {module_info[2]} sessions already reached for {module_info[1]}."})
+    
     lecturer_id = session.get("lecturer_id")
     session_key = f"{module_id}_{lecturer_id}"
     
     if session_key in attendance_sessions:
         attendance_session = attendance_sessions[session_key]
-        attendance_session.start_session()
-        return jsonify({"success": True, "message": "Attendance session started!"})
+        success, message = attendance_session.start_session()
+        return jsonify({"success": success, "message": message})
     
     return jsonify({"success": False, "message": "Session not found"})
 
@@ -1838,8 +2181,12 @@ def mark_attendance_face():
     session_record = c.fetchone()
     
     if not session_record:
-        c.execute("INSERT INTO LectureSessions (Module_ID, Session_Date, Start_Time, Topic) VALUES (?, ?, ?, ?)",
-                 (module_id, today, datetime.now().strftime("%H:%M:%S"), "Face Recognition Session"))
+        # Get next session number
+        c.execute("SELECT COUNT(*) FROM LectureSessions WHERE Module_ID = ?", (module_id,))
+        session_number = c.fetchone()[0] + 1
+        
+        c.execute("INSERT INTO LectureSessions (Module_ID, Session_Date, Start_Time, Topic, Session_Number) VALUES (?, ?, ?, ?, ?)",
+                 (module_id, today, datetime.now().strftime("%H:%M:%S"), "Face Recognition Session", session_number))
         session_id = c.lastrowid
     else:
         session_id = session_record[0]
@@ -1903,7 +2250,7 @@ def view_attendance(module_id):
     
     query = """
         SELECT s.Student_Number, s.First_Name, s.Last_Name, a.Attendance_Date, 
-               a.Attendance_Time, a.Status, ls.Topic
+               a.Attendance_Time, a.Status, ls.Topic, ls.Session_Number
         FROM Attendance a
         JOIN Students s ON a.Student_ID = s.Student_ID
         LEFT JOIN LectureSessions ls ON a.Session_ID = ls.Session_ID
@@ -1950,7 +2297,7 @@ def lecture_ratings():
     
     c.execute("""
         SELECT m.Module_Code, m.Module_Name, ls.Session_Date, ls.Topic,
-               AVG(lr.Rating) as avg_rating, COUNT(lr.Rating) as rating_count
+               AVG(lr.Rating) as avg_rating, COUNT(lr.Rating) as rating_count, ls.Session_Number
         FROM Modules m
         JOIN LectureSessions ls ON m.Module_ID = ls.Module_ID
         LEFT JOIN LectureRatings lr ON ls.Session_ID = lr.Session_ID
@@ -1962,7 +2309,7 @@ def lecture_ratings():
     rating_summary = c.fetchall()
     
     c.execute("""
-        SELECT m.Module_Code, ls.Session_Date, lr.Rating, lr.Feedback, s.First_Name, s.Last_Name
+        SELECT m.Module_Code, ls.Session_Date, lr.Rating, lr.Feedback, s.First_Name, s.Last_Name, ls.Session_Number
         FROM LectureRatings lr
         JOIN LectureSessions ls ON lr.Session_ID = ls.Session_ID
         JOIN Modules m ON ls.Module_ID = m.Module_ID
@@ -1997,7 +2344,7 @@ def export_attendance(module_id):
     
     c.execute("""
         SELECT s.Student_Number, s.First_Name, s.Last_Name, a.Attendance_Date, 
-               a.Attendance_Time, a.Status, ls.Topic
+               a.Attendance_Time, a.Status, ls.Topic, ls.Session_Number
         FROM Attendance a
         JOIN Students s ON a.Student_ID = s.Student_ID
         LEFT JOIN LectureSessions ls ON a.Session_ID = ls.Session_ID
@@ -2011,7 +2358,7 @@ def export_attendance(module_id):
     if format_type == "excel":
         df = pd.DataFrame(attendance_data, columns=[
             'Student Number', 'First Name', 'Last Name', 'Date', 
-            'Time', 'Status', 'Topic'
+            'Time', 'Status', 'Topic', 'Session Number'
         ])
         
         output = io.BytesIO()
@@ -2035,7 +2382,7 @@ def export_attendance(module_id):
         elements.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles['Normal']))
         elements.append(Paragraph("<br/>", styles['Normal']))
         
-        data = [['Student No', 'Name', 'Date', 'Time', 'Status', 'Topic']]
+        data = [['Student No', 'Name', 'Date', 'Time', 'Status', 'Topic', 'Session']]
         for record in attendance_data:
             data.append([
                 record[0],
@@ -2043,7 +2390,8 @@ def export_attendance(module_id):
                 record[3],
                 record[4],
                 record[5],
-                record[6] or "N/A"
+                record[6] or "N/A",
+                record[7] or "N/A"
             ])
         
         table = Table(data)
